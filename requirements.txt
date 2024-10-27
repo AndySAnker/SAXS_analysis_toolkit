@@ -1,0 +1,11 @@
+h5py
+sasmodels
+numpy
+scipy
+xgboost
+matplotlib
+PyYAML
+bumps
+pandas
+scikit-learn
+tqdm

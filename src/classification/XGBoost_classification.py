@@ -1,0 +1,213 @@
+# https://github.com/google-deepmind/uncertain_ground_truth/tree/main
+
+# https://github.com/njszym/XRD-AutoAnalyzer
+
+import h5py, time
+import pdb
+#import matplotlib.pyplot as plt
+import numpy as np
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from bayes_opt import BayesianOptimization
+from sklearn.metrics import log_loss
+from src.data_processing.utils import load_hdf5_data
+from src.classification.plotting import plot_log_loss, plot_confusion_matrix
+
+def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, learning_rate):
+    params = {
+        'max_depth': int(max_depth),
+        'gamma': gamma, 
+        'n_estimators': int(n_estimators),
+        'learning_rate': learning_rate,
+        'subsample': 0.8,
+        'eta': 0.1,
+        'eval_metric': 'mlogloss'
+    }
+    
+    model = xgb.XGBClassifier(**params)
+    
+    model.fit(
+        X_train, 
+        y_train, 
+        early_stopping_rounds=25, 
+        eval_set=[(X_val, y_val)], 
+        verbose=False
+    )
+    
+    y_val_pred = model.predict_proba(X_val)
+    
+    return -log_loss(y_val, y_val_pred)
+
+def process_data(file_name, num_data_points=9e15, normalise_data=True, qmin=0.001, qmax=1.5):
+    # Use load_hdf5_data to load and shuffle the data
+    Datafiles, y_decoded = load_hdf5_data(file_name, num_data_points, qmin, qmax)
+    
+    # Extract X and y from Datafiles
+    X = Datafiles[:, 1, :]  # Assuming the intensity data is in the second column
+    y = y_decoded
+    
+    print("Number of data points: ", len(X))
+
+    # Split the data into 80% train and 20% test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Split the train data into further 75% train and 25% validation
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
+    print("Number of data points for training: ", len(X_train))
+    print("Number of data points for validation: ", len(X_val))
+    print("Number of data points for testing: ", len(X_test))
+    print("Number of unique classes: ", len(np.unique(y_train)))
+    #
+
+    if normalise_data:
+        scaler = StandardScaler()
+        scaler.fit(X_train)
+        # Apply transform to both the training set and the test set.
+        X_train = scaler.transform(X_train)
+        X_val = scaler.transform(X_val)
+        X_test = scaler.transform(X_test)
+
+    # Convert the labels to integers
+    le = LabelEncoder()
+    y_train = le.fit_transform(y_train)
+    y_val = le.transform(y_val)
+    y_test = le.transform(y_test)
+    # Get class names
+    class_names = le.classes_
+
+    # Convert the data to DMatrix format
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+    dval = xgb.DMatrix(X_val, label=y_val)
+    dtest = xgb.DMatrix(X_test, label=y_test)
+    
+    return dtrain, dval, dtest, class_names
+
+def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_results=True, plot_confusion_matrix=False):
+    # Retrieve performance metrics
+    train_loss = evals_result['train']['mlogloss']
+    val_loss = evals_result['eval']['mlogloss']
+
+    if plot_results:
+        plot_log_loss(train_loss, val_loss)
+
+    # Make predictions on the training set
+    y_train_pred = model.predict(dtrain)
+
+    # Calculate the training accuracy
+    train_accuracy = accuracy_score(dtrain.get_label(), y_train_pred)
+    print(f'Training accuracy: {train_accuracy*100:.2f}%')
+
+    # Make predictions on the validation set
+    y_val_pred = model.predict(dval)
+
+    # Calculate the validation accuracy
+    val_accuracy = accuracy_score(dval.get_label(), y_val_pred)
+    print(f'Validation accuracy: {val_accuracy*100:.2f}%')
+
+    # Make predictions on the test set
+    y_test_pred = model.predict(dtest)
+
+    # Calculate the test accuracy
+    test_accuracy = accuracy_score(dtest.get_label(), y_test_pred)
+    print(f'Test accuracy: {test_accuracy*100:.2f}%')
+
+    # Calculate the baseline accuracy
+    baseline_accuracy = 1/len(np.unique(dtrain.get_label()))
+    print(f'Baseline accuracy: {baseline_accuracy*100:.2f}%')
+
+    if plot_confusion_matrix:
+        plot_confusion_matrix(dtest.get_label(), y_test_pred, class_names)
+
+    return train_accuracy, val_accuracy, test_accuracy, baseline_accuracy
+
+def train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=False):
+    device = 'cuda' if use_gpu else 'cpu'
+    tree_method = 'hist'
+
+    params = {
+        'objective': 'multi:softprob',
+        'num_class': len(np.unique(dtrain.get_label())),
+        'reg_alpha': 0,
+        'reg_lambda': 0,
+        'tree_method': tree_method,
+        'device': device
+    }
+
+    if use_bayesian_optimization:
+        # Define the bounds of the hyperparameters to be optimized
+        hyperparameter_space = {'max_depth': (3, 10),
+                                'gamma': (0, 1),
+                                'learning_rate':(0, 1),
+                                'n_estimators':(100,120)}
+
+        # Initialize the optimizer
+        optimizer = BayesianOptimization(f=bo_tune_xgb, pbounds=hyperparameter_space, verbose=2, random_state=1)
+
+        # Optimize
+        optimizer.maximize(init_points=5, n_iter=15)
+
+        # Get the best parameters
+        best_params = optimizer.max['params']
+
+        # Convert the max_depth and n_estimators to integer because Bayesian Optimization gives float
+        best_params['max_depth'] = int(best_params['max_depth'])
+        best_params['n_estimators'] = int(best_params['n_estimators'])
+
+        # Update the parameters with the best parameters
+        params.update(best_params)
+
+    # Train the model with early stopping
+    eval_set = [(dtrain, 'train'), (dval, 'eval')]
+    evals_result = {}
+    model = xgb.train(params, dtrain, num_boost_round=1000, evals=eval_set, early_stopping_rounds=25, evals_result=evals_result, verbose_eval=True)
+
+    return model, evals_result
+
+def predict_formfactor(data, MLName, class_names):
+    """
+    Predicts the form factor for given SAXS data using a pre-trained XGBoost model.
+
+    This function loads a pre-trained XGBoost model from a file, uses it to predict
+    the form factor for the input SAXS data, and returns the names of the top 3
+    predicted classes.
+
+    Parameters:
+    data (numpy.ndarray): A 2D array containing the SAXS data. The second column
+                          (index 1) is used for prediction.
+    MLName (str): The file path of the pre-trained XGBoost model.
+    class_names (numpy.ndarray): A 1D array containing the names of all possible
+                                 form factor classes.
+
+    Returns:
+    numpy.ndarray: A 1D array containing the names of the top 3 predicted classes,
+                   sorted by probability in descending order.
+
+    Raises:
+    FileNotFoundError: If the model file specified by MLName is not found.
+    xgboost.core.XGBoostError: If there's an error in loading or using the XGBoost model.
+
+    Example usage:
+    >>> data = np.array([[q1, I1], [q2, I2], ..., [qn, In]])
+    >>> MLName = 'path/to/XGBoost_model.json'
+    >>> class_names = np.array(['sphere', 'cylinder', 'ellipsoid', ...])
+    >>> top3_preds = predict_formfactor(data, MLName, class_names)
+    >>> print(top3_preds)
+    ['sphere' 'cylinder' 'ellipsoid']
+    """
+    # Load the model from a file
+    model = xgb.Booster()
+    model.load_model(MLName)
+
+    # Create the DMatrix
+    dataset = xgb.DMatrix(data[:,1].reshape(1, -1))
+    
+    # Get the probabilities of each class
+    y_test_prob = model.predict(dataset)
+    # Get the top 3 predictions
+    top3_preds = np.argsort(y_test_prob, axis=1)[:,-3:]
+    top3_preds_names = class_names[top3_preds]
+
+    return top3_preds_names[0]
+

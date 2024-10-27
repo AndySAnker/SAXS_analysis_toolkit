@@ -1,0 +1,31 @@
+# Experiment identification
+experiment_id: '00003'  # Unique identifier for this experiment
+experiment_name: 'Simulation-large-3formfactors-noNoiseResolutionNormalisation'  # Descriptive name for the experiment
+
+simulation:
+  num_datasets: 100000 # number of datasets that will be simulated
+  output_dir: "data/simulated/" # directory where the simulated datasets will be saved
+  filename_template: "SAXS_dataset_{num_datasets}.h5" # filename of the simulated datasets
+  dtype: "float16" # datatype of the simulated datasets
+  structure_factor_percentage: 0.0 # percentage of datasets that will have a structure factor where 1 is 100 %
+  powerlaw_include_chance: 0.0 # percentage of datasets that will have a powerlaw where 1 is 100 %
+  chunk_size: [1000, 1000] # number of datasets and number of points in each dataset that will be saved in the h5 file per time
+  form_factors: # see src/utils/formfactors.py for all options
+    - sphere
+    - cylinder
+    - ellipsoid
+  structure_factors: # see src/utils/structurefactors.py for all options
+    - hardsphere
+    - squarewell
+    - stickyhardsphere
+  powerlaws: # see src/utils/powerlaws.py for all options
+    - power_law
+  q_range: # q range for the simulation in Å^-1
+    start: 0.001
+    end: 1.5
+    num_points: 1000
+  resolution: # resolution range for the simulation
+    min: 0.0 # min resolution is 0 Å^-1
+    max: 0.0 # max resolution is 0.1 Å^-1
+  normalization_type: "None" # Options: "peak", "None"
+  add_noise: false # Whether to add Poisson noise to the simulated data

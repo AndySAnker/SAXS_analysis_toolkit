@@ -1,0 +1,27 @@
+# Experiment identification
+experiment_id: 'EXP001'  # Unique identifier for this experiment
+experiment_name: 'Basic Form Factor Fitting'  # Descriptive name for the experiment
+
+# Data and ML model settings
+data_dir: "data/simulated/" # directory where the simulated datasets will be saved
+DataName: f"SAXS_dataset_{num_datasets}.h5" # filename of the dataset that will be fitted
+
+# Q-range settings
+qmin: 0.001
+qmax: 1.5
+
+# Processing settings
+NumFiles: 100  # Adjust this value as needed
+solver: 'dream'
+smearing: 0.0
+
+# Error weighting
+error_weighting: 'sqrt'  # Options: 'intensity', 'sqrt', 'absolute', 'None'
+
+# Form factors, structure factors and powerlaws settings
+form_factors: # see src/utils/formfactors.py for all options
+  - sphere
+  - cylinder
+  - ellipsoid
+structure_factors: # see src/utils/structurefactors.py for all options
+powerlaws: # see src/utils/powerlaws.py for all options
