@@ -10,12 +10,12 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import LabelEncoder
-#from bayes_opt import BayesianOptimization
 from sklearn.metrics import log_loss
 from sklearn.metrics import confusion_matrix
 import ast 
 import random
 from formfactors import formfactors, formfactors_original
+from src.utils.configs import load_config
 
 formfactor_params = {
     'sphere': ['background', 'radius', 'radius_pd'],
@@ -249,18 +249,3 @@ def predict_parameters(data, MLName, formfactor, param_ranges):
             param_ranges[param_name][0] = param_values[0]
 
     return None
-
-if __name__ == '__main__':
-    start_time = time.time()
-    
-    Num_datapoint = 1.6e6
-    for formfactor in formfactors:
-        print (f'Formfactor: {formfactor}')
-        # Load the data
-        dtrain, dval, dtest = process_data(file_name='SAXS_datasets/SAXS_dataset_N100000_float16_0.0percentStructureFactor_noResolution.h5', formfactor=formfactor, num_data_points=Num_datapoint)
-        # Train the model
-        model, evals_result = train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=True)
-        model.save_model(f'XGBoost_models_parameters/XGBoost_model_{formfactor}_{int(Num_datapoint)}_0.0percentStructureFactor_noResolution.json')
-        # Evaluate the model
-        evaluate_model(model, evals_result, dtrain, dval, dtest, formfactor=formfactor, plot_results=False)
-        print(f'Time taken for {formfactor}: {(time.time() - start_time)/60:.2f} minutes')
