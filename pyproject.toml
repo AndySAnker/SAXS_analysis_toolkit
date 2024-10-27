@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "saxs_ml_cursor"
+name = "saxs_analysis"
 version = "0.0.1"
 description = "A package for simulation, fitting and machine learning analysis of Small-Angle X-ray Scattering (SAXS) data"
 authors = [{name = "Andy Sode Anker", email = "ansoan@dtu.dk"}]

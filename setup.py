@@ -5,7 +5,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(
-    name="saxs_ml_cursor",
+    name="saxs_analysis,
     version="0.0.1",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
