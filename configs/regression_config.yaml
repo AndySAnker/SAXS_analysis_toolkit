@@ -1,0 +1,15 @@
+data:
+  file_name: "SAXS_datasets/SAXS_dataset_N1000_float16_0.0percentStructureFactor.h5"
+  num_data_points: 10000
+  normalise_data: false
+  plot_data: false
+
+model:
+  use_bayesian_optimization: false
+  use_gpu: true
+  model_save_path: "XGBoost_model_{num_data_points}.json"
+  class_names_save_path: "XGBoost_models_ensemble/class_names.npy"
+
+evaluation:
+  plot_results: false
+  plot_confusion_matrix: false
