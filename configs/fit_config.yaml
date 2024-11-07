@@ -4,7 +4,7 @@ experiment_name: 'Basic Form Factor Fitting'  # Descriptive name for the experim
 
 # Data and ML model settings
 data_dir: "data/simulated/" # directory where the simulated datasets will be saved
-DataName: "SAXS_dataset_100000.h5" # filename of the dataset that will be fitted
+DataName: "SAXS_dataset_10000.h5" # filename of the dataset that will be fitted
 
 # Q-range settings
 qmin: 0.001

@@ -1,12 +1,12 @@
 import os
 import argparse
 import time
-from src.utils.configs import load_config
-from src.fitting.fit_sas import SAS_Fitter
 from sklearn.metrics import accuracy_score
-from src.data_processing.utils import load_hdf5_data
-from src.utils.logging import setup_logging
-
+from SAXS_analysis.utils.configs import load_config
+from SAXS_analysis.fitting.fit_sas import SAS_Fitter
+from SAXS_analysis.data_processing.utils import load_hdf5_data
+from SAXS_analysis.utils.logging import setup_logging
+from SAXS_analysis.utils.constants import ROOT_DIR
 class Result:
     def __init__(self, formfactor, goodness_of_fit, R_w, index, logger):
         self.formfactor = formfactor
@@ -32,6 +32,7 @@ def fit_sas_data_for_formfactors(sas_fitter, formfactors, solver, smearing, logg
 def analyze_sas_data(sas_fitter, datafiles, qmin, qmax, error_weighting, normalization_type, form_factors, solver, smearing, logger):
     all_results = []
     for index, datafile in enumerate(datafiles):
+        import pdb; pdb.set_trace()
         logger.info(f"Fitting datafile {index} of {len(datafiles)}")
         sas_fitter.load_data(datafile, qmin, qmax, error_weighting, normalization_type)
         logger.debug(f"Loaded datafile {index} of {len(datafiles)}")
@@ -91,12 +92,12 @@ def main():
 
         # Load and process data
         logger.info("Loading and processing data...")
-        datafiles, y_decoded = load_hdf5_data(os.path.join(config['data_dir'], config['DataName']), config['NumFiles'], config['qmin'], config['qmax'])
+        datafiles, y_decoded = load_hdf5_data(os.path.join(ROOT_DIR, config['data_dir'], config['DataName']), config['NumFiles'], config['qmin'], config['qmax'])
         logger.info(f'Datafiles: {datafiles}')
 
         # Fit SAS data
         logger.info("Fitting SAS data...")
-        sas_fitter = SAS_Fitter(os.path.join(config['data_dir'], config['DataName']))
+        sas_fitter = SAS_Fitter(os.path.join(ROOT_DIR, config['data_dir'], config['DataName']))
         logger.info(f'sas_fitter: {sas_fitter}')
         fitting_results = analyze_sas_data(sas_fitter, datafiles, config['qmin'], config['qmax'], config['error_weighting'], config['normalise_data'], config['form_factors'], config['solver'], config['smearing'], logger)
         

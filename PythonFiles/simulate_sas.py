@@ -1,9 +1,9 @@
 import argparse
 import numpy as np
 import time
-from src.simulation.simulate_sas import simulate_sas_datasets
-from src.utils.configs import load_config
-from src.utils.logging import setup_logging
+from SAXS_analysis.simulation.simulate_sas import simulate_sas_datasets
+from SAXS_analysis.utils.configs import load_config
+from SAXS_analysis.utils.logging import setup_logging
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.metrics import log_loss
 import ast 
-from src.utils.formfactors import formfactor_params, formfactors_original
+from SAXS_analysis.utils.formfactors import formfactor_params, formfactors_original
 
 def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate):
     params = {'max_depth': int(max_depth),

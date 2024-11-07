@@ -1,10 +1,10 @@
 import time
 import argparse
 from pathlib import Path
-from src.regression.XGBoost_regression import train_model, evaluate_model
-from src.utils.configs import load_config
-from src.utils.logging import setup_logging
-from src.regression.utils import process_data_regression
+from SAXS_analysis.regression.XGBoost_regression import train_model, evaluate_model
+from SAXS_analysis.utils.configs import load_config
+from SAXS_analysis.utils.logging import setup_logging
+from SAXS_analysis.regression.utils import process_data_regression
 
 def main():
     parser = argparse.ArgumentParser()

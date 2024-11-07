@@ -4,7 +4,7 @@ import sasmodels.data
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import ast
-from src.utils.formfactors import formfactor_params
+from SAXS_analysis.utils.formfactors import formfactor_params
 
 def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     """
@@ -31,6 +31,8 @@ def load_and_process_SAS_data(data_source, qmin, qmax, error_weighting, normaliz
     """
     Load SAS data from a file or numpy array, normalize it, and filter it based on qmin and qmax.
     """
+    import pdb; pdb.set_trace()
+
     if isinstance(data_source, str):
         try:
             data = np.loadtxt(data_source, delimiter=',')

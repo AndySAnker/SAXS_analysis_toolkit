@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utils.constants import ROOT_DIR
+from SAXS_analysis.utils.constants import ROOT_DIR
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import os

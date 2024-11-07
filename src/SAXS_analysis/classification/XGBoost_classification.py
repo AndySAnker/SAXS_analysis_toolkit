@@ -9,8 +9,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from bayes_opt import BayesianOptimization
 from sklearn.metrics import log_loss
-from src.data_processing.utils import load_hdf5_data
-from src.visualization.utils import plot_log_loss, plot_confusion_matrix
+from SAXS_analysis.data_processing.utils import load_hdf5_data
+from SAXS_analysis.visualization.utils import plot_log_loss, plot_confusion_matrix
 
 def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, learning_rate, early_stopping_rounds):
     params = {

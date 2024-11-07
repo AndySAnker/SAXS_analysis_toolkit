@@ -1,9 +1,9 @@
 # Experiment identification
-experiment_id: '00003'  # Unique identifier for this experiment
+experiment_id: '00001'  # Unique identifier for this experiment
 experiment_name: 'Simulation-large-3formfactors-noNoiseResolutionNormalisation'  # Descriptive name for the experiment
 
 simulation:
-  num_datasets: 100000 # number of datasets that will be simulated
+  num_datasets: 10000 # number of datasets that will be simulated
   output_dir: "data/simulated/" # directory where the simulated datasets will be saved
   filename_template: "SAXS_dataset_{num_datasets}.h5" # filename of the simulated datasets
   dtype: "float16" # datatype of the simulated datasets

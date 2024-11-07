@@ -5,9 +5,9 @@ from sasmodels.core import load_model
 from sasmodels.bumps_model import Model
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utils.parameter_ranges import param_ranges
-from src.utils.size_distribution_models import size_distribution_models
-from src.data_processing.utils import load_and_process_SAS_data
+from SAXS_analysis.utils.parameter_ranges import param_ranges
+from SAXS_analysis.utils.size_distribution_models import size_distribution_models
+from SAXS_analysis.data_processing.utils import load_and_process_SAS_data
 
 class SAS_Fitter:
     """
@@ -80,6 +80,7 @@ class SAS_Fitter:
         """
 
         # Load the model and get the parameters
+        import pdb; pdb.set_trace()
         kernel = load_model(formfactor)
         model_parameters_ph = dict()
         # Get the names of the parameters and update the model_parameters attribute
@@ -99,11 +100,13 @@ class SAS_Fitter:
                     param_values = np.random.choice(self.radius_pd_type)
                 else:   
                     param_values = (np.random.uniform(*self.param_ranges[param_name]), self.param_ranges[param_name][0], self.param_ranges[param_name][1])
+                import pdb; pdb.set_trace()
                 print(f"Param values: {param_values}")
                 if isinstance(param_values, (int, float, str)):
                     # If there's only one value, fix the parameter to this value
                     model_parameters[param_name] = param_values
                 elif len(param_values) == 3:
+                    import pdb; pdb.set_trace()
                     # If there are three values, set the parameter to the first value and allow it to vary between the second and third values
                     print(f"Param values 2: {param_values}")
                     model_parameters_fit[param_name] = Parameter(param_values[0], limits=(0,inf), name=param_name).range(param_values[1], param_values[2])

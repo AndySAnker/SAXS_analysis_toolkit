@@ -1,6 +1,6 @@
 import xgboost as xgb
 from sklearn.preprocessing import LabelEncoder
-from src.data_processing.utils import load_and_preprocess_data, split_data
+from SAXS_analysis.data_processing.utils import load_and_preprocess_data, split_data
     
 def process_data_classification(file_name: str, num_data_points: int = int(9e15), 
                               normalize: bool = True, qmin: float = 0.001, 

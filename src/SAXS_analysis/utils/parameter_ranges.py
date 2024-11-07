@@ -15,7 +15,7 @@ or a choice from predefined options.
 Note: Ensure that 'random' and 'numpy' are imported at the beginning of this file.
 """
 
-from src.utils.size_distribution_models import size_distribution_models
+from SAXS_analysis.utils.size_distribution_models import size_distribution_models
 
 param_ranges = {
     'scale': (0, 1),
