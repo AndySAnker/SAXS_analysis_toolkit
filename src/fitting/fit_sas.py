@@ -4,11 +4,10 @@ from bumps.mapper import MPMapper
 from sasmodels.core import load_model
 from sasmodels.bumps_model import Model
 import numpy as np
-from saxs_ml_cursor.src.utils.formfactors import formfactor_params
 import matplotlib.pyplot as plt
-from saxs_ml_cursor.src.utils.params import param_ranges
-from saxs_ml_cursor.src.utils.size_distribution_models import size_distribution_models
-from saxs_ml_cursor.src.data_processing.utils import load_and_process_data
+from src.utils.parameter_ranges import param_ranges
+from src.utils.size_distribution_models import size_distribution_models
+from src.data_processing.utils import load_and_process_SAS_data
 
 class SAS_Fitter:
     """
@@ -48,7 +47,8 @@ class SAS_Fitter:
         pass
 
     def load_data(self, Datafile, qmin, qmax, error_weigthing, normalization_type='None'):
-        self.data = load_and_process_data(Datafile, qmin, qmax, error_weigthing, normalization_type)
+        self.data = load_and_process_SAS_data(Datafile, qmin, qmax, error_weigthing, normalization_type)
+        
 
     def fit_sas_data(self, formfactor, solver, smearing):
         """
@@ -93,24 +93,36 @@ class SAS_Fitter:
         model_parameters = {}
         model_parameters_fit = {}
         for param_name in model_parameters_ph:
+            print(f"Param name: {param_name}")
             if param_name in self.param_ranges:
-                param_values = self.param_ranges[param_name]
+                if param_name.endswith('_pd_type'):
+                    param_values = np.random.choice(self.radius_pd_type)
+                else:   
+                    param_values = (np.random.uniform(*self.param_ranges[param_name]), self.param_ranges[param_name][0], self.param_ranges[param_name][1])
+                print(f"Param values: {param_values}")
                 if isinstance(param_values, (int, float, str)):
                     # If there's only one value, fix the parameter to this value
                     model_parameters[param_name] = param_values
                 elif len(param_values) == 3:
                     # If there are three values, set the parameter to the first value and allow it to vary between the second and third values
+                    print(f"Param values 2: {param_values}")
                     model_parameters_fit[param_name] = Parameter(param_values[0], limits=(0,inf), name=param_name).range(param_values[1], param_values[2])
 
+        print(f"Model parameters: {model_parameters}")
+        print(f"Model parameters fit: {model_parameters_fit}")
         # Create the problem
         problem = self.make_problem(kernel, model_parameters, model_parameters_fit, smearing)
+        print(f"Problem: {problem}")
         self.param_ranges['scale'][0] /= problem.fitness.theory().max()
         self.param_ranges['background'][0] = 0.2*self.data_np[:,1].min()
         model_parameters_fit['scale'] = Parameter(self.param_ranges['scale'][0], limits=(0,inf), name='scale').range(self.param_ranges['scale'][1], self.param_ranges['scale'][2])
         model_parameters_fit['background'] = Parameter(self.param_ranges['background'][0], limits=(0,inf), name='background').range(self.param_ranges['background'][1], self.param_ranges['scale'][2])
         problem = self.make_problem(kernel, model_parameters, model_parameters_fit, smearing)
+        print(f"Problem: {problem}")
         mapper = MPMapper.start_mapper(problem, None, cpus=0) #cpu=0 for all CPUs
+        print(f"Mapper: {mapper}")
         result = bumps.fitters.fit(problem, method=solver, mapper=mapper, burn=10, samples=1e4) # https://bumps.readthedocs.io/en/latest/_modules/bumps/mapper.html and https://readthedocs.org/projects/bumps/downloads/pdf/latest/
+        print(f"Result: {result}")
 
         plt.clf()
         problem.plot()    
@@ -120,6 +132,7 @@ class SAS_Fitter:
 
         # Calculate the calculated intensity from the model
         I_calc = problem.fitness.theory()
+        self.I_calc = I_calc
         # Calculate R_w
         if hasattr(self.data, 'dy'):
             R_w = np.sqrt(np.sum(((self.data.y - I_calc) ** 2) / self.data.dy ** 2) / np.sum((self.data.y ** 2) / self.data.dy ** 2))
@@ -140,6 +153,15 @@ class SAS_Fitter:
         experiment.resolution = smearing # set the resolution
         problem = bumps.fitproblem.FitProblem(experiment)
         return problem
+    
+    def plot_sas_data(self):
+        plt.clf()
+        plt.plot(self.data.x, self.data.y, label='Data')
+        plt.plot(self.data.x, self.I_calc, label='Fitted')
+        plt.legend()
+        plt.show()
+    
+
 
 
 

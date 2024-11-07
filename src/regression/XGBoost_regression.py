@@ -2,39 +2,15 @@
 
 # https://github.com/njszym/XRD-AutoAnalyzer
 
-import h5py, time
-import pdb
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import log_loss
-from sklearn.metrics import confusion_matrix
 import ast 
-import random
-from formfactors import formfactors, formfactors_original
-from src.utils.configs import load_config
-
-formfactor_params = {
-    'sphere': ['background', 'radius', 'radius_pd'],
-    'cylinder': ['background', 'radius', 'radius_pd', 'length', 'length_pd'],
-    'ellipsoid': ['background', 'radius_polar', 'radius_equatorial'],
-    'elliptical_cylinder': ['background', 'radius_minor', 'axis_ratio', 'length', 'length_pd'],
-    'flexible_cylinder': ['background', 'radius', 'radius_pd', 'length', 'length_pd', 'kuhn_length'],
-    'flexible_cylinder_elliptical': ['background', 'radius', 'radius_pd', 'axis_ratio', 'length', 'length_pd', 'kuhn_length'],
-    'stacked_disks': ['background', 'radius', 'radius_pd', 'thick_layer', 'thick_core', 'n_stacking'],
-    'core_shell_ellipsoid': ['background', 'radius_equat_core', 'x_core', 'thick_shell', 'x_polar_shell', 'sld_core', 'sld_shell'],
-    'binary_hard_sphere': ['background', 'radius_lg', 'radius_sm', 'volfraction_lg', 'volfraction_sm'],
-    'vesicle': ['background', 'radius', 'radius_pd', 'thickness', 'volfraction'],
-    'core_shell_sphere': ['background', 'radius', 'radius_pd', 'thickness'],
-    'triaxial_ellipsoid': ['background', 'radius_equat_minor', 'radius_equat_major', 'radius_polar'],
-    'superball': ['background', 'length_a', 'exponent_p'],
-    'fuzzy_sphere': ['background', 'radius', 'radius_pd', 'fuzziness'],
-    'hollow_cylinder': ['background', 'radius', 'radius_pd', 'length', 'length_pd', 'thickness'],
-    'lamellar': ['background', 'thickness'],
-                    }
+from src.utils.formfactors import formfactor_params, formfactors_original
 
 def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate):
     params = {'max_depth': int(max_depth),

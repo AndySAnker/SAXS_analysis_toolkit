@@ -1,21 +1,21 @@
 #!/bin/bash
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=<ansoan@dtu.dk>  # The default value is the submitting user.
-#SBATCH --partition=xeon56 #xeon24el8
+#SBATCH --partition=xeon24el8_test #xeon24el8
 #SBATCH -N 1      # Minimum of 2 nodes
 #SBATCH -n 1     # with n 112: 56 MPI processes per node, 112 tasks in total, appropriate for xeon56 nodes
-#SBATCH -c 56     # cpus-per-task
-#SBATCH --time=2-02:00:00 # 1 day, 2 hours, 0 min, 0 sec.
+#SBATCH -c 24     # cpus-per-task
+#SBATCH --time=0-00:10:00 # 1 day, 2 hours, 0 min, 0 sec.
 #SBATCH --begin=now+0 # 0 is in minutes
 #SBATCH --mem 100Gb # Memory per node
 #SBATCH --output=../ErrorLogSbatchFiles/%j_simulate_SAS.log
 #SBATCH --error=../ErrorLogSbatchFiles/%j_simulate_SAS.err
 
 # Write the content of this script into the log file
-cat $0 >> "../ErrorLogSbatchFiles/${SLURM_JOB_ID}_SbatchFile.log"
+cat $0 >> "../ErrorLogSbatchFiles/${SLURM_JOB_ID}_SBATCH.log"
 
 # Define the root directory
-ROOT_DIR="/home/energy/ansoan/SAXS_ML_cursor"
+ROOT_DIR="../"
 
 # Navigate to the project root
 cd $ROOT_DIR
@@ -24,11 +24,9 @@ cd $ROOT_DIR
 export PYTHONPATH="$ROOT_DIR:$ROOT_DIR/src:$PYTHONPATH"
 
 # Install the package in editable mode (if needed)
-pip3 install --user -r requirements.txt
+module load Python/3.11.3-GCCcore-12.3.0
+pip3 install --upgrade pip
 pip3 install --user -e .
-
-pip3 uninstall sasmodels
-pip3 install sasmodels
 
 # Run the simulation script with the config file
 srun python3 -u PythonFiles/simulate_sas.py --config configs/simulation_config.yaml

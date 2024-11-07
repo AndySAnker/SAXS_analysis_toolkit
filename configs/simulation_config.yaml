@@ -29,3 +29,6 @@ simulation:
     max: 0.0 # max resolution is 0.1 Å^-1
   normalization_type: "None" # Options: "peak", "None"
   add_noise: false # Whether to add Poisson noise to the simulated data
+
+# Verbosity level
+verbose: 2

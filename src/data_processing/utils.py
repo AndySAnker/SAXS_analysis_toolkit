@@ -1,10 +1,14 @@
 import h5py
 import numpy as np
 import sasmodels.data
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import ast
+from src.utils.formfactors import formfactor_params
 
-def load_hdf5_data(filename, num_files, qmin, qmax):
+def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     """
-    Load data from an HDF5 file, shuffle it, and prepare it for machine learning purposes.
+    Load data from an HDF5 file, shuffle it, and prepare data for ML purposes.
     """
     with h5py.File(filename, 'r') as f:
         X = f['SAXS_dataset'][()]
@@ -23,9 +27,9 @@ def load_hdf5_data(filename, num_files, qmin, qmax):
     
     return Datafiles, y_decoded[:num_files]
 
-def load_and_process_data(data_source, qmin, qmax, error_weighting, normalization_type='None'):
+def load_and_process_SAS_data(data_source, qmin, qmax, error_weighting, normalization_type='None'):
     """
-    Load data from a file or numpy array, normalize it, and filter it based on qmin and qmax.
+    Load SAS data from a file or numpy array, normalize it, and filter it based on qmin and qmax.
     """
     if isinstance(data_source, str):
         try:
@@ -48,7 +52,7 @@ def load_and_process_data(data_source, qmin, qmax, error_weighting, normalizatio
         noise = apply_error_weighting(data[mask], error_weighting)
         data = sasmodels.data.Data1D(x=data[mask,0], y=data[mask,1], dy=noise)
 
-    return data, data
+    return data
 
 def normalize_intensity(intensity, normalization_type='peak'):
     """
@@ -94,3 +98,87 @@ def apply_error_weighting(data, error_weighting='sqrt'):
         return np.abs(data[:, 1])
     else:
         raise ValueError(f"Invalid value for error_weighting: {error_weighting}")
+
+
+def load_and_preprocess_data(file_name: str, num_data_points: int = int(9e15), 
+                           qmin: float = 0.001, qmax: float = 1.5,
+                           target_formfactor: str = None) -> tuple:
+    """
+    Data loading and masking of qmin, qmax, num_data_points, and target_formfactor.
+    
+    Args:
+        file_name: Path to HDF5 file
+        num_data_points: Maximum number of data points to process
+        qmin: Minimum q value
+        qmax: Maximum q value
+        target_formfactor: If specified, filter data for this formfactor only
+    
+    Returns:
+        tuple: (X, y) or (X, y, formfactors) depending on target_formfactor parameter
+    """
+
+    # First load the data
+    with h5py.File(file_name, 'r') as f:
+        X = f['SAXS_dataset'][()]
+        if target_formfactor:
+            y = f['parameters_formfactor'][()][:len(X)]
+            all_formfactors = np.array([x[0].decode() for x in f['formfactor'][()][:len(X)]])
+        else:
+            Datafiles, y = load_hdf5_data(file_name, num_data_points, qmin, qmax)
+            X = Datafiles[:, 1, :]  # Extract intensity data
+            return X, y
+
+    # Remove infinities
+    mask_finite = np.all(np.isfinite(X), axis=1)
+    X = X[mask_finite]
+    y = y[mask_finite] if 'y' in locals() else None
+    all_formfactors = all_formfactors[mask_finite] if 'all_formfactors' in locals() else None
+
+    if target_formfactor:
+        # Filter for specific formfactor
+        mask_formfactor = all_formfactors == target_formfactor
+        X = X[mask_formfactor]
+        y = y[mask_formfactor] if y is not None else None
+        
+        # Process parameters for regression
+        y_dicts = [ast.literal_eval(item[0].decode()) for item in y]
+        y_new = np.zeros((len(y_dicts), len(formfactor_params[target_formfactor])))
+        
+        for param in formfactor_params[target_formfactor]:
+            param_idx = formfactor_params[target_formfactor].index(param)
+            y_new[:, param_idx] = [d[param] for d in y_dicts]
+        y = y_new
+
+    # Limit data points
+    X = X[:int(num_data_points)]
+    y = y[:int(num_data_points)] if y is not None else None
+    
+    return X, y
+
+
+def split_data(X: np.ndarray, y: np.ndarray, normalize: bool = False) -> tuple:
+    """
+    Common data splitting and normalization functionality.
+    
+    Args:
+        X: Feature matrix
+        y: Target values
+        normalize: Whether to normalize features
+    
+    Returns:
+        tuple: (dtrain, dval, dtest) or (dtrain, dval, dtest, class_names)
+    """
+    # Split into train/test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Split train into train/val
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
+
+    if normalize:
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_val = scaler.transform(X_val)
+        X_test = scaler.transform(X_test)
+
+    return X_train, X_val, X_test, y_train, y_val, y_test
+

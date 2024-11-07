@@ -2,9 +2,6 @@
 
 # https://github.com/njszym/XRD-AutoAnalyzer
 
-import h5py, time
-import pdb
-#import matplotlib.pyplot as plt
 import numpy as np
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
@@ -13,9 +10,9 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from bayes_opt import BayesianOptimization
 from sklearn.metrics import log_loss
 from src.data_processing.utils import load_hdf5_data
-from src.classification.plotting import plot_log_loss, plot_confusion_matrix
+from src.visualization.utils import plot_log_loss, plot_confusion_matrix
 
-def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, learning_rate):
+def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, learning_rate, early_stopping_rounds):
     params = {
         'max_depth': int(max_depth),
         'gamma': gamma, 
@@ -31,7 +28,7 @@ def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, 
     model.fit(
         X_train, 
         y_train, 
-        early_stopping_rounds=25, 
+        early_stopping_rounds=early_stopping_rounds, 
         eval_set=[(X_val, y_val)], 
         verbose=False
     )
@@ -48,18 +45,11 @@ def process_data(file_name, num_data_points=9e15, normalise_data=True, qmin=0.00
     X = Datafiles[:, 1, :]  # Assuming the intensity data is in the second column
     y = y_decoded
     
-    print("Number of data points: ", len(X))
-
     # Split the data into 80% train and 20% test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Split the train data into further 75% train and 25% validation
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
-    print("Number of data points for training: ", len(X_train))
-    print("Number of data points for validation: ", len(X_val))
-    print("Number of data points for testing: ", len(X_test))
-    print("Number of unique classes: ", len(np.unique(y_train)))
-    #
 
     if normalise_data:
         scaler = StandardScaler()
@@ -74,6 +64,7 @@ def process_data(file_name, num_data_points=9e15, normalise_data=True, qmin=0.00
     y_train = le.fit_transform(y_train)
     y_val = le.transform(y_val)
     y_test = le.transform(y_test)
+
     # Get class names
     class_names = le.classes_
 
@@ -97,32 +88,28 @@ def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_r
 
     # Calculate the training accuracy
     train_accuracy = accuracy_score(dtrain.get_label(), y_train_pred)
-    print(f'Training accuracy: {train_accuracy*100:.2f}%')
 
     # Make predictions on the validation set
     y_val_pred = model.predict(dval)
 
     # Calculate the validation accuracy
     val_accuracy = accuracy_score(dval.get_label(), y_val_pred)
-    print(f'Validation accuracy: {val_accuracy*100:.2f}%')
 
     # Make predictions on the test set
     y_test_pred = model.predict(dtest)
 
     # Calculate the test accuracy
     test_accuracy = accuracy_score(dtest.get_label(), y_test_pred)
-    print(f'Test accuracy: {test_accuracy*100:.2f}%')
 
     # Calculate the baseline accuracy
     baseline_accuracy = 1/len(np.unique(dtrain.get_label()))
-    print(f'Baseline accuracy: {baseline_accuracy*100:.2f}%')
 
     if plot_confusion_matrix:
         plot_confusion_matrix(dtest.get_label(), y_test_pred, class_names)
 
     return train_accuracy, val_accuracy, test_accuracy, baseline_accuracy
 
-def train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=False):
+def train_model(dtrain, dval, early_stopping_rounds=25, use_bayesian_optimization=False, use_gpu=False):
     device = 'cuda' if use_gpu else 'cpu'
     tree_method = 'hist'
 
@@ -161,7 +148,7 @@ def train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=False):
     # Train the model with early stopping
     eval_set = [(dtrain, 'train'), (dval, 'eval')]
     evals_result = {}
-    model = xgb.train(params, dtrain, num_boost_round=1000, evals=eval_set, early_stopping_rounds=25, evals_result=evals_result, verbose_eval=True)
+    model = xgb.train(params, dtrain, num_boost_round=1000, evals=eval_set, early_stopping_rounds=early_stopping_rounds, evals_result=evals_result, verbose_eval=True)
 
     return model, evals_result
 

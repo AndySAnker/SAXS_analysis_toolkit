@@ -1,8 +1,13 @@
+# Experiment identification
+experiment_id: '00001'  # Unique identifier for this experiment
+experiment_name: 'regression_test'  # Descriptive name for the experiment
+
 data:
-  file_name: "SAXS_datasets/SAXS_dataset_N1000_float16_0.0percentStructureFactor.h5"
-  num_data_points: 10000
+  file_name: "data/simulated/SAXS_dataset_100000.h5"
+  num_data_points: 100000
   normalise_data: false
   plot_data: false
+  formfactor: 'sphere'
 
 model:
   use_bayesian_optimization: false
@@ -13,3 +18,6 @@ model:
 evaluation:
   plot_results: false
   plot_confusion_matrix: false
+
+# Verbosity level
+verbose: 2

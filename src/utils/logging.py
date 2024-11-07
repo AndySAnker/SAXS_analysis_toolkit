@@ -8,12 +8,22 @@ def setup_logging(config):
 
     # Set up logging
     log_file = os.path.join(log_dir, f"{config['experiment_id']}.log")
+    
+    # Set logging level based on verbosity
+    if config['verbose'] == 0:
+        log_level = logging.WARNING  # Only warnings and errors
+    elif config['verbose'] == 1:
+        log_level = logging.INFO     # Info and above
+    else:
+        log_level = logging.DEBUG    # All messages
+        
+    handlers = [logging.FileHandler(log_file)]
+    if config['verbose'] > 0:  # Only add stream handler if verbose > 0
+        handlers.append(logging.StreamHandler())
+        
     logging.basicConfig(
-        level=logging.INFO,
+        level=log_level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler()
-        ]
+        handlers=handlers
     )
     return logging.getLogger(__name__)

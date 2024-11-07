@@ -1,27 +1,33 @@
 #!/bin/bash
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=<ansoan@dtu.dk>  # The default value is the submitting user.
-#SBATCH --partition=xeon24
+#SBATCH --partition=xeon56 #xeon24el8
 #SBATCH -N 1      # Minimum of 2 nodes
 #SBATCH -n 1     # with n 112: 56 MPI processes per node, 112 tasks in total, appropriate for xeon56 nodes
-#SBATCH -c 24     # cpus-per-task
+#SBATCH -c 56     # cpus-per-task
 #SBATCH --time=2-02:00:00 # 1 day, 2 hours, 0 min, 0 sec.
 #SBATCH --begin=now+0 # 0 is in minutes
 #SBATCH --mem 100Gb # Memory per node
-#SBATCH --output=ErrorLogFiles/%j_regression.log
-#SBATCH --error=ErrorLogFiles/%j_regression.err
+#SBATCH --output=../ErrorLogSbatchFiles/%j_regression.log
+#SBATCH --error=../ErrorLogSbatchFiles/%j_regression.err
 
 # Write the content of this script into the log file
-cat $0 >> "ErrorLogSbatchFiles/${SLURM_JOB_ID}_SbatchFile.log"
+cat $0 >> "../ErrorLogSbatchFiles/${SLURM_JOB_ID}_SBATCH.log"
 
-module load h5py/3.9.0-foss-2023a
-module load SciPy-bundle/2023.07-iimkl-2023a
-module load scikit-learn/1.3.1-gfbf-2023a
-pip3 install XGBoost
-module load matplotlib/3.7.2-iimkl-2023a
+# Define the root directory
+ROOT_DIR="../"
 
-# Print the current date and time
-echo "Script started on: $(date)"
+# Navigate to the project root
+cd $ROOT_DIR
+
+# Add the project root and the src directory to PYTHONPATH
+export PYTHONPATH="$ROOT_DIR:$ROOT_DIR/src:$PYTHONPATH"
+
+# Install the package in editable mode (if needed)
+module load Python/3.11.3-GCCcore-12.3.0
+pip3 install --upgrade pip
+pip3 install --user -e .
+
 
 # Run the regression script with the config file
 srun python3 -u PythonFiles/regression.py --config configs/regression_config.yaml
