@@ -1,0 +1,15 @@
+# Experiment identification
+experiment_id: '00001'
+experiment_name: 'classification_test'
+
+# Data settings
+data:
+  file_name: "SAXS_datasets/SAXS_dataset_N1000_float16_0.0percentStructureFactor.h5"
+  num_data_points: 10000
+  normalise_data: false
+  plot_data: false
+  qmin: 0.001  # Added based on process_data_classification parameters
+  qmax:
+
+# Verbosity level
+verbose: 2
