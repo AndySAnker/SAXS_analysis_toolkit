@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=<ansoan@dtu.dk>  # The default value is the submitting user.
-#SBATCH --partition=xeon24el8_test #xeon24el8
+#SBATCH --partition=epyc96 #xeon24el8
 #SBATCH -N 1      # Minimum of 2 nodes
 #SBATCH -n 1     # with n 112: 56 MPI processes per node, 112 tasks in total, appropriate for xeon56 nodes
-#SBATCH -c 24     # cpus-per-task
-#SBATCH --time=0-00:10:00 # 1 day, 2 hours, 0 min, 0 sec.
+#SBATCH -c 96     # cpus-per-task
+#SBATCH --time=2-02:00:00 # 1 day, 2 hours, 0 min, 0 sec.
 #SBATCH --begin=now+0 # 0 is in minutes
 #SBATCH --mem 100Gb # Memory per node
 #SBATCH --output=../ErrorLogSbatchFiles/%j_simulate_SAS.log

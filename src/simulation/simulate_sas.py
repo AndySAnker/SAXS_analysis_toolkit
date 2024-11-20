@@ -222,7 +222,7 @@ def simulate_sas_datasets(
         logger.info("Starting multiprocessing pool for simulations")
         with multiprocessing.Pool() as pool:
             for index, result in enumerate(pool.imap_unordered(simulate_single, inputs)):
-                Iq, dIq, formfactor_model, parameters_formfactor, structurefactor_model, parameters_structurefactor, powerlaw_model, parameters_powerlaw, _ = result
+                q, Iq, dIq, formfactor_model, parameters_formfactor, structurefactor_model, parameters_structurefactor, powerlaw_model, parameters_powerlaw, _ = result
 
                 dset.resize(index + 1, axis=0)
                 dset[index, :] = np.array([Iq]).astype(dtype)

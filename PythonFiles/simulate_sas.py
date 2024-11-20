@@ -37,7 +37,19 @@ if __name__ == '__main__':
         simulate_sas_datasets(
             num_datasets=config['simulation']['num_datasets'],
             output_dir=config['simulation']['output_dir'],
-            filename=config['simulation']['filename_template'].format(num_datasets=config['simulation']['num_datasets']),
+            filename=config['simulation']['filename_template'].format(
+                num_datasets=config['simulation']['num_datasets'],
+                dtype=config['simulation']['dtype'],
+                structure_factor_percentage=config['simulation']['structure_factor_percentage'],
+                powerlaw_include_chance=config['simulation']['powerlaw_include_chance'],
+                q_range_start=config['simulation']['q_range']['start'],
+                q_range_end=config['simulation']['q_range']['end'],
+                q_range_num_points=config['simulation']['q_range']['num_points'],
+                resolution_min=config['simulation']['resolution']['min'],
+                resolution_max=config['simulation']['resolution']['max'],
+                normalization_type=config['simulation']['normalization_type'],
+                add_noise=config['simulation']['add_noise']
+            ),
             dtype=np.dtype(config['simulation']['dtype']),
             structurefactor_include_chance=config['simulation']['structure_factor_percentage'],
             powerlaw_include_chance=config['simulation']['powerlaw_include_chance'],

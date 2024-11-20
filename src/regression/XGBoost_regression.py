@@ -12,7 +12,7 @@ from sklearn.metrics import log_loss
 import ast 
 from src.utils.formfactors import formfactor_params, formfactors_original
 
-def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate):
+def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate, early_stopping_rounds):
     params = {'max_depth': int(max_depth),
               'gamma': gamma, 
               'n_estimators': int(n_estimators),
@@ -21,7 +21,7 @@ def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate):
               'eta': 0.1,
               'eval_metric': 'rmse'}
     model = xgb.XGBClassifier(**params)
-    model.fit(X_train, y_train, early_stopping_rounds=25, eval_set=[(X_val, y_val)], verbose=False)
+    model.fit(X_train, y_train, early_stopping_rounds=early_stopping_rounds, eval_set=[(X_val, y_val)], verbose=False)
     y_val_pred = model.predict_proba(X_val)
     return -log_loss(y_val, y_val_pred)
 
@@ -128,7 +128,7 @@ def evaluate_model(model, evals_result, dtrain, dval, dtest, formfactor, plot_re
 
     return None
 
-def train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=False):
+def train_model(dtrain, dval, early_stopping_rounds=25, hyperparameter_optimisation=False, use_gpu=False):
     device = 'cuda' if use_gpu else 'cpu'
     tree_method = 'hist'
 
@@ -141,7 +141,7 @@ def train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=False):
         'device': device
     }
 
-    if use_bayesian_optimization:
+    if hyperparameter_optimisation:
         # Define the bounds of the hyperparameters to be optimized
         hyperparameter_space = {'max_depth': (3, 10),
                                 'gamma': (0, 1),
@@ -149,7 +149,7 @@ def train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=False):
                                 'n_estimators':(100,120)}
 
         # Initialize the optimizer
-        optimizer = BayesianOptimization(f=bo_tune_xgb, pbounds=hyperparameter_space, verbose=2, random_state=1)
+        optimizer = BayesianOptimization(f=lambda max_depth, gamma, n_estimators, learning_rate: bo_tune_xgb(max_depth, gamma, n_estimators, learning_rate, early_stopping_rounds), pbounds=hyperparameter_space, verbose=2, random_state=1)
 
         # Optimize
         optimizer.maximize(init_points=5, n_iter=15)
@@ -167,7 +167,7 @@ def train_model(dtrain, dval, use_bayesian_optimization=False, use_gpu=False):
     # Train the model with early stopping
     eval_set = [(dtrain, 'train'), (dval, 'eval')]
     evals_result = {}
-    model = xgb.train(params, dtrain, num_boost_round=1000, evals=eval_set, early_stopping_rounds=25, evals_result=evals_result, verbose_eval=True)
+    model = xgb.train(params, dtrain, num_boost_round=1000, evals=eval_set, early_stopping_rounds=early_stopping_rounds, evals_result=evals_result, verbose_eval=True)
 
     return model, evals_result
 

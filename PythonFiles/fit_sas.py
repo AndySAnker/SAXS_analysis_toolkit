@@ -40,6 +40,7 @@ def analyze_sas_data(sas_fitter, datafiles, qmin, qmax, error_weighting, normali
         results = fit_sas_data_for_formfactors(sas_fitter, form_factors, solver, smearing, logger)
         logger.debug(f"Fitted datafile {index} of {len(datafiles)}")
         all_results.extend(results)
+    logger.debug(f"All results: {all_results}")
     return all_results
 
 def get_best_fits(results, criterion):

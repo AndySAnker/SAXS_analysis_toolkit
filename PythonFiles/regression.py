@@ -27,8 +27,9 @@ def main():
         logger.debug(f"Form factor: {config['data']['formfactor']}")
         logger.debug(f"Model settings:")
         logger.debug(f"- Use GPU: {config['model']['use_gpu']}")
-        logger.debug(f"- Use Bayesian optimization: {config['model']['use_bayesian_optimization']}")
-        logger.debug(f"- Model save path: {config['model']['model_save_path']}")
+        logger.debug(f"- Use hyperparameter optimisation: {config['model']['hyperparameter_optimisation']}")
+        logger.debug(f"- Early stopping rounds: {config['model']['early_stopping_rounds']}")
+        logger.debug(f"- Model save path: {config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])}")
 
         # Load and process data
         logger.info("Loading and processing data...")
@@ -44,15 +45,14 @@ def main():
         model, evals_result = train_model(
             dtrain=dtrain,
             dval=dval,
-            use_bayesian_optimization=config['model']['use_bayesian_optimization'],
+            early_stopping_rounds=config['model']['early_stopping_rounds'],
+            hyperparameter_optimisation=config['model']['hyperparameter_optimisation'],
             use_gpu=config['model']['use_gpu']
         )
 
         # Save model
         logger.info("Saving model...")
-        model_path = Path(config['model']['model_save_path']).with_name(
-            f"{config['experiment_name']}_n{config['data']['num_data_points']}.model"
-        )
+        model_path = Path(config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']))
         model.save_model(str(model_path))
         logger.info(f"Model saved to {model_path}")
 

@@ -4,12 +4,22 @@ experiment_name: 'classification_test'
 
 # Data settings
 data:
-  file_name: "SAXS_datasets/SAXS_dataset_N1000_float16_0.0percentStructureFactor.h5"
-  num_data_points: 10000
+  file_name: "data/simulated/SAXS_dataset_100000.h5"
+  num_data_points: 100000
   normalise_data: false
-  plot_data: false
-  qmin: 0.001  # Added based on process_data_classification parameters
-  qmax:
+
+# Model settings
+model:
+  hyperparameter_optimisation: false
+  use_gpu: true
+  early_stopping_rounds: 25
+  model_save_path: "models/classification/XGBoost_model_{num_data_points}_normData{normalise_data}_earlyStopping{early_stopping_rounds}_hyperparameter{hyperparameter_optimisation}.model"
+  class_names_save_path: "models/classification/class_names_{num_data_points}_normData{normalise_data}_earlyStopping{early_stopping_rounds}_hyperparameter{hyperparameter_optimisation}.npy"
+
+# Evaluation settings
+evaluation:
+  plot_results: false
+  plot_confusion_matrix: false
 
 # Verbosity level
 verbose: 2

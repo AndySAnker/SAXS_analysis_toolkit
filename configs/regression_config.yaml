@@ -10,10 +10,11 @@ data:
   formfactor: 'sphere'
 
 model:
-  use_bayesian_optimization: false
+  hyperparameter_optimisation: false
   use_gpu: true
-  model_save_path: "XGBoost_model_{num_data_points}.json"
-  class_names_save_path: "XGBoost_models_ensemble/class_names.npy"
+  early_stopping_rounds: 25
+  model_save_path: "models/regression/XGBoost_model_{num_data_points}_normData{normalise_data}_earlyStopping{early_stopping_rounds}_hyperparameter{hyperparameter_optimisation}.model"
+  class_names_save_path: "models/regression/class_names_{num_data_points}_normData{normalise_data}_earlyStopping{early_stopping_rounds}_hyperparameter{hyperparameter_optimisation}.npy"
 
 evaluation:
   plot_results: false

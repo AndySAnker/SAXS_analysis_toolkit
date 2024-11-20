@@ -85,31 +85,30 @@ def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_r
 
     # Make predictions on the training set
     y_train_pred = model.predict(dtrain)
-
+    
     # Calculate the training accuracy
-    train_accuracy = accuracy_score(dtrain.get_label(), y_train_pred)
+    train_accuracy = accuracy_score(dtrain.get_label(), np.argmax(y_train_pred, axis=1))
 
     # Make predictions on the validation set
     y_val_pred = model.predict(dval)
 
     # Calculate the validation accuracy
-    val_accuracy = accuracy_score(dval.get_label(), y_val_pred)
+    val_accuracy = accuracy_score(dval.get_label(), np.argmax(y_val_pred, axis=1))
 
     # Make predictions on the test set
     y_test_pred = model.predict(dtest)
-
     # Calculate the test accuracy
-    test_accuracy = accuracy_score(dtest.get_label(), y_test_pred)
+    test_accuracy = accuracy_score(dtest.get_label(), np.argmax(y_test_pred, axis=1))
 
     # Calculate the baseline accuracy
     baseline_accuracy = 1/len(np.unique(dtrain.get_label()))
 
     if plot_confusion_matrix:
-        plot_confusion_matrix(dtest.get_label(), y_test_pred, class_names)
+        plot_confusion_matrix(dtest.get_label(), np.argmax(y_test_pred, axis=1), class_names)
 
     return train_accuracy, val_accuracy, test_accuracy, baseline_accuracy
 
-def train_model(dtrain, dval, early_stopping_rounds=25, use_bayesian_optimization=False, use_gpu=False):
+def train_model(dtrain, dval, early_stopping_rounds=25, hyperparameter_optimisation=False, use_gpu=False):
     device = 'cuda' if use_gpu else 'cpu'
     tree_method = 'hist'
 
@@ -122,7 +121,7 @@ def train_model(dtrain, dval, early_stopping_rounds=25, use_bayesian_optimizatio
         'device': device
     }
 
-    if use_bayesian_optimization:
+    if hyperparameter_optimisation:
         # Define the bounds of the hyperparameters to be optimized
         hyperparameter_space = {'max_depth': (3, 10),
                                 'gamma': (0, 1),
