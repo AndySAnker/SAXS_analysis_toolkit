@@ -23,25 +23,57 @@ def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     
     q = np.linspace(qmin, qmax, 1000)
     q_repeated = np.repeat(q[np.newaxis, :], num_files, axis=0)
-    Datafiles = np.stack((q_repeated, X[:num_files]), axis=2)
+    Datafiles = np.stack((q_repeated, X[:num_files]), axis=1)
     
     return Datafiles, y_decoded[:num_files]
 
-def load_and_process_SAS_data(data_source, qmin, qmax, error_weighting, normalization_type='None'):
+def load_and_process_SAS_data(data_source=None, x=None, y=None, z=None, qmin=None, qmax=None, 
+                             error_weighting=None, normalization_type='None'):
     """
-    Load SAS data from a file or numpy array, normalize it, and filter it based on qmin and qmax.
+    Load SAS data from a file, numpy array, or individual x, y, and optionally z arrays.
+    Normalize it, and filter it based on qmin and qmax.
     """
-    if isinstance(data_source, str):
-        try:
-            data = np.loadtxt(data_source, delimiter=',')
-        except ValueError:
-            data = np.loadtxt(data_source, delimiter=' ')
-    elif isinstance(data_source, np.ndarray):
-        data = data_source
+    if data_source is not None:
+        if isinstance(data_source, str):
+            try:
+                # Try different delimiters and ensure float dtype
+                try:
+                    data = np.loadtxt(data_source, delimiter=',', dtype=float)
+                except ValueError:
+                    try:
+                        data = np.loadtxt(data_source, delimiter=' ', dtype=float)
+                    except ValueError:
+                        data = np.loadtxt(data_source, delimiter='\t', dtype=float)
+            except Exception as e:
+                print(f"Error loading data from {data_source}: {e}")
+                # Debug information
+                with open(data_source, 'r') as f:
+                    print("First few lines of file:")
+                    print(f.read(200))
+                raise
+        elif isinstance(data_source, np.ndarray):
+            data = data_source.astype(float)
+        else:
+            raise TypeError("data_source must be a string or a numpy array")
+    elif x is not None and y is not None:
+        # Ensure x and y are float arrays
+        x = np.asarray(x, dtype=float)
+        y = np.asarray(y, dtype=float)
+        if z is not None:
+            z = np.asarray(z, dtype=float)
+        data = np.column_stack((x, y)) if z is None else np.column_stack((x, y, z))
     else:
-        raise TypeError("data_source must be a string or a numpy array")
+        raise ValueError("Either data_source or both x and y must be provided")
+    
+    if qmin is None:
+        qmin = float(np.min(data[:,0]))
+    if qmax is None:
+        qmax = float(np.max(data[:,0]))
 
-    mask = (data[:,0] >= qmin) & (data[:,0] <= qmax) & (data[:,1] > 0)
+    # Ensure numeric comparisons
+    mask = (data[:,0].astype(float) >= float(qmin)) & \
+           (data[:,0].astype(float) <= float(qmax)) & \
+           (data[:,1].astype(float) > 0)
 
     if data.shape[1] > 2:
         data[:,2] = normalize_intensity(data[:,2], normalization_type)
@@ -116,7 +148,6 @@ def load_and_preprocess_data(file_name: str, num_data_points: int = int(9e15),
     Returns:
         tuple: (X, y) or (X, y, formfactors) depending on target_formfactor parameter
     """
-
     # First load the data
     with h5py.File(file_name, 'r') as f:
         X = f['SAXS_dataset'][()]
@@ -125,8 +156,12 @@ def load_and_preprocess_data(file_name: str, num_data_points: int = int(9e15),
             all_formfactors = np.array([x[0].decode() for x in f['formfactor'][()][:len(X)]])
         else:
             Datafiles, y = load_hdf5_data(file_name, num_data_points, qmin, qmax)
-            X = Datafiles[:, 1, :]  # Extract intensity data
+            X = Datafiles[:, :, :]  # Extract intensity data
+
+            # Only use the intensity data
+            X = X[:,1]  
             return X, y
+    
 
     # Remove infinities
     mask_finite = np.all(np.isfinite(X), axis=1)
@@ -152,7 +187,7 @@ def load_and_preprocess_data(file_name: str, num_data_points: int = int(9e15),
     # Limit data points
     X = X[:int(num_data_points)]
     y = y[:int(num_data_points)] if y is not None else None
-    
+
     return X, y
 
 
@@ -173,6 +208,7 @@ def split_data(X: np.ndarray, y: np.ndarray, normalize: bool = False) -> tuple:
     
     # Split train into train/val
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
+
 
     if normalize:
         scaler = StandardScaler()

@@ -6,9 +6,12 @@ def process_data_classification(file_name: str, num_data_points: int = int(9e15)
                               normalize: bool = True, qmin: float = 0.001, 
                               qmax: float = 1.5) -> tuple:
     """Process data for classification task."""
+    # Load and preprocess the data
     X, y = load_and_preprocess_data(file_name, num_data_points, qmin, qmax)
+
+    # Split the data
     X_train, X_val, X_test, y_train, y_val, y_test = split_data(X, y, normalize)
-    
+
     # Convert labels to integers
     le = LabelEncoder()
     y_train = le.fit_transform(y_train)
@@ -16,10 +19,15 @@ def process_data_classification(file_name: str, num_data_points: int = int(9e15)
     y_test = le.transform(y_test)
     class_names = le.classes_
     
+    # Convert data to DMatrix format
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+    dval = xgb.DMatrix(X_val, label=y_val)
+    dtest = xgb.DMatrix(X_test, label=y_test)
+
     return (
-        xgb.DMatrix(X_train, label=y_train),
-        xgb.DMatrix(X_val, label=y_val),
-        xgb.DMatrix(X_test, label=y_test),
+        dtrain,
+        dval,
+        dtest,
         class_names
     )
 

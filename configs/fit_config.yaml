@@ -4,7 +4,7 @@ experiment_name: 'Basic Form Factor Fitting'  # Descriptive name for the experim
 
 # Data and ML model settings
 data_dir: "data/simulated/" # directory where the simulated datasets will be saved
-DataName: "SAXS_dataset_100000.h5" # filename of the dataset that will be fitted
+DataName: "SAXS_dataset_100000_floatfloat16_structureFactor0.0percent_powerlaw0.0percent_qmin0.001_qmax1.5_numPoints1000_resolutionMin0.0_resolutionMax0.0_normalisationNone_noiseFalse.h5" # filename of the dataset that will be fitted
 
 # Q-range settings
 qmin: 0.001
@@ -12,7 +12,7 @@ qmax: 1.5
 normalise_data: None # None or 'peak'
 
 # Processing settings
-NumFiles: 2  # Adjust this value as needed
+NumFiles: 10  # Adjust this value as needed
 solver: 'dream'
 smearing: 0.0
 

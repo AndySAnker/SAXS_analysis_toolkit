@@ -22,7 +22,7 @@ def fit_sas_data_for_formfactors(sas_fitter, formfactors, solver, smearing, logg
         formfactor = str(formfactor)
         logger.debug(f"Fitting for formfactor: {formfactor}")
         try:
-            goodness_of_fit, R_w, fitted_params = sas_fitter.fit_sas_data(formfactor, solver, smearing)
+            _, goodness_of_fit, R_w, fitted_params = sas_fitter.fit_sas_data(formfactor, solver, smearing)
             logger.debug(f"Fitted formfactor: {formfactor}, goodness_of_fit: {goodness_of_fit}, R_w: {R_w}")
             results.append(Result(formfactor, goodness_of_fit, R_w, sas_fitter.current_index, logger))
         except Exception as e:

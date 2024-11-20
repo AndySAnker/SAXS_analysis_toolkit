@@ -1,9 +1,9 @@
 # Experiment identification
 experiment_id: '00003'  # Unique identifier for this experiment
-experiment_name: 'Simulation-medium-3formfactors-noNoiseResolutionNormalisation'  # Descriptive name for the experiment
+experiment_name: 'Simulation-large-3formfactors-noNoiseResolutionNormalisation'  # Descriptive name for the experiment
 
 simulation:
-  num_datasets: 100000 # number of datasets that will be simulated
+  num_datasets: 1000000 # number of datasets that will be simulated
   output_dir: "data/simulated/" # directory where the simulated datasets will be saved
   dtype: "float16" # datatype of the simulated datasets
   structure_factor_percentage: 0.0 # percentage of datasets that will have a structure factor where 1 is 100 %

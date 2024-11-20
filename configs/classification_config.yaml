@@ -4,7 +4,7 @@ experiment_name: 'classification_test'
 
 # Data settings
 data:
-  file_name: "data/simulated/SAXS_dataset_100000.h5"
+  file_name: "data/simulated/SAXS_dataset_100000_floatfloat16_structureFactor0.0percent_powerlaw0.0percent_qmin0.001_qmax1.5_numPoints1000_resolutionMin0.0_resolutionMax0.0_normalisationNone_noiseFalse.h5"
   num_data_points: 100000
   normalise_data: false
 

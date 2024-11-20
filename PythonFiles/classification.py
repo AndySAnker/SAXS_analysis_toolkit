@@ -41,8 +41,11 @@ if __name__ == '__main__':
     )
     logger.info(f"Number of data points: {dtrain.num_row() + dval.num_row() + dtest.num_row()}")
     logger.info(f"Number of data points for training: {dtrain.num_row()}")
+    logger.info(f"dtrain shape: {dtrain.num_row()} x {dtrain.num_col()}")
     logger.info(f"Number of data points for validation: {dval.num_row()}")
+    logger.info(f"dval shape: {dval.num_row()} x {dval.num_col()}")
     logger.info(f"Number of data points for testing: {dtest.num_row()}")
+    logger.info(f"dtest shape: {dtest.num_row()} x {dtest.num_col()}")
     logger.info(f"Number of unique classes: {len(class_names)}")
     
     # Log number of entries per class for the total dataset

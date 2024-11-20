@@ -29,4 +29,4 @@ pip3 install --upgrade pip
 pip3 install --user -e .
 
 # Run the simulation script with the config file
-srun python3 -u PythonFiles/simulate_sas.py --config configs/simulation_config.yaml
+srun python3 -u PythonFiles/simulate_sas.py --config configs/simulation_config_large.yaml

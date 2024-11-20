@@ -37,44 +37,6 @@ def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, 
     
     return -log_loss(y_val, y_val_pred)
 
-def process_data(file_name, num_data_points=9e15, normalise_data=True, qmin=0.001, qmax=1.5):
-    # Use load_hdf5_data to load and shuffle the data
-    Datafiles, y_decoded = load_hdf5_data(file_name, num_data_points, qmin, qmax)
-    
-    # Extract X and y from Datafiles
-    X = Datafiles[:, 1, :]  # Assuming the intensity data is in the second column
-    y = y_decoded
-    
-    # Split the data into 80% train and 20% test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Split the train data into further 75% train and 25% validation
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
-
-    if normalise_data:
-        scaler = StandardScaler()
-        scaler.fit(X_train)
-        # Apply transform to both the training set and the test set.
-        X_train = scaler.transform(X_train)
-        X_val = scaler.transform(X_val)
-        X_test = scaler.transform(X_test)
-
-    # Convert the labels to integers
-    le = LabelEncoder()
-    y_train = le.fit_transform(y_train)
-    y_val = le.transform(y_val)
-    y_test = le.transform(y_test)
-
-    # Get class names
-    class_names = le.classes_
-
-    # Convert the data to DMatrix format
-    dtrain = xgb.DMatrix(X_train, label=y_train)
-    dval = xgb.DMatrix(X_val, label=y_val)
-    dtest = xgb.DMatrix(X_test, label=y_test)
-    
-    return dtrain, dval, dtest, class_names
-
 def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_results=True, plot_confusion_matrix=False):
     # Retrieve performance metrics
     train_loss = evals_result['train']['mlogloss']

@@ -40,15 +40,14 @@ class SAS_Fitter:
         Fits the SAS data using a specified form factor model and solver.
     """
 
-    def __init__(self, DataName):
-        self.DataName = DataName
+    def __init__(self):
         self.radius_pd_type = size_distribution_models
         self.param_ranges = param_ranges
         pass
 
-    def load_data(self, Datafile, qmin, qmax, error_weigthing, normalization_type='None'):
-        self.data = load_and_process_SAS_data(Datafile, qmin, qmax, error_weigthing, normalization_type)
-        
+    def load_data(self, data_source=None, qmin=None, qmax=None, error_weighting=None, normalization_type='None', x=None, y=None, z=None):
+        self.error_weighting = error_weighting
+        self.data = load_and_process_SAS_data(data_source=data_source, x=x, y=y, z=z, qmin=qmin, qmax=qmax, error_weighting=error_weighting, normalization_type=normalization_type)
 
     def fit_sas_data(self, formfactor, solver, smearing):
         """
@@ -93,40 +92,26 @@ class SAS_Fitter:
         model_parameters = {}
         model_parameters_fit = {}
         for param_name in model_parameters_ph:
-            print(f"Param name: {param_name}")
             if param_name in self.param_ranges:
                 if param_name.endswith('_pd_type'):
                     param_values = np.random.choice(self.radius_pd_type)
                 else:   
-                    param_values = (np.random.uniform(*self.param_ranges[param_name]), self.param_ranges[param_name][0], self.param_ranges[param_name][1])
-                print(f"Param values: {param_values}")
+                    param_values = (np.random.uniform(*self.param_ranges[param_name]), self.param_ranges[param_name][0]-1e-6, self.param_ranges[param_name][1]+1e-6)
                 if isinstance(param_values, (int, float, str)):
                     # If there's only one value, fix the parameter to this value
                     model_parameters[param_name] = param_values
                 elif len(param_values) == 3:
                     # If there are three values, set the parameter to the first value and allow it to vary between the second and third values
-                    print(f"Param values 2: {param_values}")
                     model_parameters_fit[param_name] = Parameter(param_values[0], limits=(0,inf), name=param_name).range(param_values[1], param_values[2])
 
-        print(f"Model parameters: {model_parameters}")
-        print(f"Model parameters fit: {model_parameters_fit}")
         # Create the problem
         problem = self.make_problem(kernel, model_parameters, model_parameters_fit, smearing)
-        print(f"Problem: {problem}")
-        self.param_ranges['scale'][0] /= problem.fitness.theory().max()
-        self.param_ranges['background'][0] = 0.2*self.data_np[:,1].min()
-        model_parameters_fit['scale'] = Parameter(self.param_ranges['scale'][0], limits=(0,inf), name='scale').range(self.param_ranges['scale'][1], self.param_ranges['scale'][2])
-        model_parameters_fit['background'] = Parameter(self.param_ranges['background'][0], limits=(0,inf), name='background').range(self.param_ranges['background'][1], self.param_ranges['scale'][2])
-        problem = self.make_problem(kernel, model_parameters, model_parameters_fit, smearing)
-        print(f"Problem: {problem}")
         mapper = MPMapper.start_mapper(problem, None, cpus=0) #cpu=0 for all CPUs
-        print(f"Mapper: {mapper}")
         result = bumps.fitters.fit(problem, method=solver, mapper=mapper, burn=10, samples=1e4) # https://bumps.readthedocs.io/en/latest/_modules/bumps/mapper.html and https://readthedocs.org/projects/bumps/downloads/pdf/latest/
-        print(f"Result: {result}")
 
-        plt.clf()
-        problem.plot()    
-        plt.savefig(f"{self.DataName}_{formfactor}_{self.error_weigthing}_noResolution.png")                               
+        #plt.clf()
+        #problem.plot()    
+        #plt.savefig(f"{self.DataName}_{formfactor}_{self.error_weigthing}_noResolution.png")                               
         # Get the goodness of fit
         goodness_of_fit = problem.chisq()
 
@@ -142,7 +127,7 @@ class SAS_Fitter:
         # Get the fitted parameters
         fitted_params = problem.fitness.model.state()
 
-        return goodness_of_fit, R_w, fitted_params
+        return I_calc, goodness_of_fit, R_w, fitted_params
 
     def make_problem(self, kernel, model_parameters, model_parameters_fit, smearing=0.0):
         model = Model(model=kernel, **model_parameters, **model_parameters_fit)
