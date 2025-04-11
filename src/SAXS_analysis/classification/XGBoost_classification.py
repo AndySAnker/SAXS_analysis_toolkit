@@ -4,12 +4,9 @@
 
 import numpy as np
 import xgboost as xgb
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 from bayes_opt import BayesianOptimization
 from sklearn.metrics import log_loss
-from SAXS_analysis.data_processing.utils import load_hdf5_data
 from SAXS_analysis.visualization.utils import plot_log_loss, plot_confusion_matrix
 import SAXS_analysis
 ROOT_DIR = SAXS_analysis.ROOT_DIR
@@ -39,13 +36,13 @@ def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, 
     
     return -log_loss(y_val, y_val_pred)
 
-def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_results=True, plot_confusion_matrix=False):
+def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_results=True, save_basename=''):
     # Retrieve performance metrics
     train_loss = evals_result['train']['mlogloss']
     val_loss = evals_result['eval']['mlogloss']
 
     if plot_results:
-        plot_log_loss(train_loss, val_loss)
+        plot_log_loss(train_loss, val_loss, save_basename + '_log_loss.png')
 
     # Make predictions on the training set
     y_train_pred = model.predict(dtrain)
@@ -67,8 +64,8 @@ def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_r
     # Calculate the baseline accuracy
     baseline_accuracy = 1/len(np.unique(dtrain.get_label()))
 
-    if plot_confusion_matrix:
-        plot_confusion_matrix(dtest.get_label(), np.argmax(y_test_pred, axis=1), class_names)
+    if plot_results:
+        plot_confusion_matrix(dtest.get_label(), np.argmax(y_test_pred, axis=1), class_names, save_basename + '_confusion_matrix.png')
 
     return train_accuracy, val_accuracy, test_accuracy, baseline_accuracy
 

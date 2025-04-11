@@ -6,6 +6,8 @@ from SAXS_analysis.regression.XGBoost_regression import train_model, evaluate_mo
 from SAXS_analysis.utils.configs import load_config
 from SAXS_analysis.utils.logging import setup_logging
 from SAXS_analysis.regression.utils import process_data_regression
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def main():
     parser = argparse.ArgumentParser()
@@ -30,14 +32,14 @@ def main():
         logger.debug(f"- Use GPU: {config['model']['use_gpu']}")
         logger.debug(f"- Use hyperparameter optimisation: {config['model']['hyperparameter_optimisation']}")
         logger.debug(f"- Early stopping rounds: {config['model']['early_stopping_rounds']}")
-        logger.debug(f"- Model save path: {config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])}")
+        logger.debug(f"- Model save path: {ROOT_DIR / 'models' / 'regression' / config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])}")
 
         for formfactor in config['data']['formfactors']:
             logger.info(f"Processing data for formfactor: {formfactor}")
             # Load and process data
             logger.info("Loading and processing data...")
             dtrain, dval, dtest = process_data_regression(
-                file_name=config['data']['file_name'],
+                file_name=ROOT_DIR / 'data' / 'simulated' / config['data']['file_name'],
                 formfactor=formfactor,
                 num_data_points=config['data']['num_data_points']
             )
@@ -55,7 +57,7 @@ def main():
 
             # Save model
             logger.info("Saving model...")
-            model_path = Path(config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']))
+            model_path = Path(ROOT_DIR / 'models' / 'regression' / config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']))
             os.makedirs(model_path, exist_ok=True)
             model.save_model(f"{model_path}/{formfactor}.model")
             logger.info(f"Model saved to {model_path}")

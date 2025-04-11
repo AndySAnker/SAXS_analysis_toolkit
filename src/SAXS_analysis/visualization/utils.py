@@ -4,9 +4,8 @@ import SAXS_analysis
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-import os
 
-def plot_random_data(X, y, num_plots=3, save_path=ROOT_DIR / 'plots' / 'random_data.png'):
+def plot_random_data(X, y, num_plots=3, save_path='random_data.png'):
     # Define the x-axis
     x_axis = np.linspace(0.001, 1.5, 1000)
 
@@ -26,29 +25,35 @@ def plot_random_data(X, y, num_plots=3, save_path=ROOT_DIR / 'plots' / 'random_d
                 axs[j, k].set_xscale('log')
                 axs[j, k].set_yscale('log')
         plt.tight_layout()
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path)
+        plt.savefig(ROOT_DIR / 'plots' / save_path)
         plt.close()
 
-def plot_log_loss(train_loss, val_loss):
+def plot_log_loss(train_loss, val_loss, save_path='log_loss.png'):
     epochs = len(train_loss)
     x_axis = range(epochs)
 
     fig, ax = plt.subplots()
     ax.plot(x_axis, train_loss, label='Train')
     ax.plot(x_axis, val_loss, label='Validation')
-    ax.legend()
-    plt.ylabel('Log Loss')
-    plt.title('XGBoost Log Loss')
-    plt.show()
+    ax.legend(fontsize=8)
+    plt.ylabel('Log loss', fontsize=8)
+    plt.xlabel('Epochs', fontsize=8)
+    plt.xticks(fontsize=6)
+    plt.yticks(fontsize=6)
+    plt.savefig(ROOT_DIR / 'plots' / save_path)
+    plt.close()
 
 
-def plot_confusion_matrix(y_true, y_pred, class_names):
+def plot_confusion_matrix(y_true, y_pred, class_names, save_path='confusion_matrix.png'):
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(10, 7))
     ax = sns.heatmap(cm, annot=True, fmt='d', xticklabels=class_names, yticklabels=class_names)
-    plt.xlabel('Predicted')
-    plt.ylabel('Truth')
+    plt.xlabel('Predicted', fontsize=8)
+    plt.ylabel('Truth', fontsize=8)
     colorbar = ax.collections[0].colorbar
-    colorbar.set_label('Number of predictions')
-    plt.show()
+    colorbar.set_label('Number of predictions', fontsize=8, rotation=270, labelpad=10)
+    colorbar.ax.tick_params(labelsize=6)
+    plt.xticks(fontsize=6)
+    plt.yticks(fontsize=6)
+    plt.savefig(ROOT_DIR / 'plots' / save_path)
+    plt.close()

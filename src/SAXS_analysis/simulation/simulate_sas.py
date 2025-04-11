@@ -59,7 +59,7 @@ class SAS_Simulator:
         self.model_str = model_str
         self.q = q
         self.resolution = resolution
-        self.model = load_model(ROOT_DIR / self.model_str)
+        self.model = load_model(self.model_str)
         self.model_parameters = dict()
         # Get the names of the parameters and update the model_parameters attribute
         self.model_parameters[self.model_str] = [param.name for param in self.model.info.parameters.call_parameters] 

@@ -4,6 +4,8 @@ import time
 from SAXS_analysis.simulation.simulate_sas import simulate_sas_datasets
 from SAXS_analysis.utils.configs import load_config
 from SAXS_analysis.utils.logging import setup_logging
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -18,7 +20,7 @@ if __name__ == '__main__':
 
     logger.debug(f"num_datasets: {config['simulation']['num_datasets']}")
     logger.debug(f"output_dir: {config['simulation']['output_dir']}")
-    logger.debug(f"filename_template: {config['simulation']['filename_template']}")
+    logger.debug(f"filename: {config['simulation']['filename']}")
     logger.debug(f"dtype: {config['simulation']['dtype']}")
     logger.debug(f"structure_factor_percentage: {config['simulation']['structure_factor_percentage']}")
     logger.debug(f"powerlaw_include_chance: {config['simulation']['powerlaw_include_chance']}")
@@ -37,7 +39,7 @@ if __name__ == '__main__':
         simulate_sas_datasets(
             num_datasets=config['simulation']['num_datasets'],
             output_dir=config['simulation']['output_dir'],
-            filename=config['simulation']['filename_template'].format(
+            filename=ROOT_DIR / 'data' / 'simulated' / config['simulation']['filename'].format(
                 num_datasets=config['simulation']['num_datasets'],
                 dtype=config['simulation']['dtype'],
                 structure_factor_percentage=config['simulation']['structure_factor_percentage'],

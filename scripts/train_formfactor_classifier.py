@@ -5,6 +5,8 @@ from SAXS_analysis.classification.XGBoost_classification import train_model, eva
 from SAXS_analysis.utils.configs import load_config
 from SAXS_analysis.utils.logging import setup_logging
 from SAXS_analysis.classification.utils import process_data_classification
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -29,13 +31,12 @@ if __name__ == '__main__':
     logger.debug(f"model_save_path: {config['model']['model_save_path']}")
     logger.debug(f"class_names_save_path: {config['model']['class_names_save_path']}")
     logger.debug(f"plot_results: {config['evaluation']['plot_results']}")
-    logger.debug(f"plot_confusion_matrix: {config['evaluation']['plot_confusion_matrix']}")
     logger.debug(f"early_stopping_rounds: {config['model']['early_stopping_rounds']}")
 
     # Load the data
     logger.info("Loading and processing data...")
     dtrain, dval, dtest, class_names = process_data_classification(
-        file_name=config['data']['file_name'],
+        file_name=ROOT_DIR / 'data' / 'simulated' / config['data']['file_name'],
         num_data_points=config['data']['num_data_points'],
         normalize=config['data']['normalise_data']    
     )
@@ -68,18 +69,19 @@ if __name__ == '__main__':
 
     # Save the model and class names
     logger.info("Saving model and class names...")
-    model_save_path = config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])
+    model_save_path = ROOT_DIR / 'models' / 'classification' / config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])
     model.save_model(model_save_path)
-    np.save(config['model']['class_names_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']), class_names)
+    np.save(ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']), class_names)
     logger.info(f"Model saved to {model_save_path}")
-    logger.info(f"Class names saved to {config['model']['class_names_save_path']}")
+    logger.info(f"Class names saved to {ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path']}")
 
     # Evaluate the model
     logger.info("Starting model evaluation...")
+
     train_accuracy, val_accuracy, test_accuracy, baseline_accuracy = evaluate_model(
         model, evals_result, dtrain, dval, dtest, class_names,
         plot_results=config['evaluation']['plot_results'],
-        plot_confusion_matrix=config['evaluation']['plot_confusion_matrix']
+        save_basename=config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']).replace('.model', '')
     )
     logger.info(f"Model evaluation complete. Train accuracy: {train_accuracy*100:.4f}%, Validation accuracy: {val_accuracy*100:.4f}%, Test accuracy: {test_accuracy*100:.4f}%, Baseline accuracy: {baseline_accuracy*100:.4f}%")
 

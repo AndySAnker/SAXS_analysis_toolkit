@@ -81,7 +81,7 @@ class SAS_Fitter:
         """
 
         # Load the model and get the parameters
-        kernel = load_model(ROOT_DIR / formfactor)
+        kernel = load_model(formfactor)
         model_parameters_ph = dict()
         # Get the names of the parameters and update the model_parameters attribute
         model_parameters_ph = [param.name for param in kernel.info.parameters.call_parameters] 

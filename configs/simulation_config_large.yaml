@@ -28,7 +28,7 @@ simulation:
     max: 0.0 # max resolution is 0.1 Å^-1
   normalization_type: "None" # Options: "peak", "None"
   add_noise: false # Whether to add Poisson noise to the simulated data
-  filename_template: "SAXS_dataset_{num_datasets}_float{dtype}_structureFactor{structure_factor_percentage}percent_powerlaw{powerlaw_include_chance}percent_qmin{q_range_start}_qmax{q_range_end}_numPoints{q_range_num_points}_resolutionMin{resolution_min}_resolutionMax{resolution_max}_normalisation{normalization_type}_noise{add_noise}.h5" # filename of the simulated datasets
+  filename: "SAXS_dataset_{num_datasets}_float{dtype}_structureFactor{structure_factor_percentage}percent_powerlaw{powerlaw_include_chance}percent_qmin{q_range_start}_qmax{q_range_end}_numPoints{q_range_num_points}_resolutionMin{resolution_min}_resolutionMax{resolution_max}_normalisation{normalization_type}_noise{add_noise}.h5" # filename of the simulated datasets
 
 # Verbosity level
 verbose: 2
