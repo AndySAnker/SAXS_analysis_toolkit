@@ -8,6 +8,8 @@ ROOT_DIR = SAXS_analysis.ROOT_DIR
 import numpy as np
 import xgboost as xgb
 import matplotlib.pyplot as plt
+from bumps.parameter import Parameter
+from numpy import inf
 
 """Input parameters"""
 # Data parameters
@@ -95,6 +97,29 @@ print("\n===== FITTING RESULTS =====")
 predicted_formfactor = class_names[formfactor_prediction[0]]
 print(f"Fitting using formfactor: {predicted_formfactor}")
 
+# Load the regression model for the predicted formfactor to get initial parameters
+parameter_regression_model = load_regression_model(parameter_regression_model_basename, predicted_formfactor)
+parameter_regression = parameter_regression_model.predict(dmatrix)
+all_parameters = formfactor_params[predicted_formfactor]
+
+# First create a dictionary with the raw predicted values for display
+predicted_values = {}
+for j, param in enumerate(all_parameters):
+    predicted_values[param] = parameter_regression[0][j]
+
+print("\n  Using regression model predictions as initial parameters:")
+for param, value in predicted_values.items():
+    print(f"    {param}: {value:.6f}")
+
+# Create a dictionary with Parameter objects for fitting
+model_parameters_fit = {}
+for param, value in predicted_values.items():
+    if not param.endswith('_pd_type'):  # Skip type parameters
+        # Create a Parameter object with a reasonable range around the predicted value
+        lower = max(0.1, value * 0.5)  # Lower bound: 50% of predicted or 0.1 (whichever is higher)
+        upper = value * 2.0  # Upper bound: 200% of predicted
+        model_parameters_fit[param] = Parameter(value, limits=(0, inf), name=param).range(lower, upper)
+
 # Initialize the SAS fitter
 SAS_Fitter = SAS_Fitter()
 
@@ -110,11 +135,12 @@ SAS_Fitter.load_data(
     normalization_type=normalization_type
 )
 
-# Perform the fit
+# Perform the fit using the predicted parameters as starting values
 Icalc, goodness_of_fit, R_w, fitted_params = SAS_Fitter.fit_sas_data(
     predicted_formfactor, 
     solver, 
-    smearing
+    smearing,
+    model_parameters_fit=model_parameters_fit
 )
 
 # Print fitting results

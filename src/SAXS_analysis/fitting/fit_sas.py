@@ -51,7 +51,7 @@ class SAS_Fitter:
         self.error_weighting = error_weighting
         self.data = load_and_process_SAS_data(data_source=data_source, x=x, y=y, z=z, qmin=qmin, qmax=qmax, error_weighting=error_weighting, normalization_type=normalization_type)
 
-    def fit_sas_data(self, formfactor, solver, smearing):
+    def fit_sas_data(self, formfactor, solver, smearing, model_parameters_fit=None):
         """
         Function to fit Small Angle Scattering (SAS) data using a specified form factor model and solver.
 
@@ -92,7 +92,7 @@ class SAS_Fitter:
 
         # Define the parameters to be fitted
         model_parameters = {}
-        model_parameters_fit = {}
+        model_parameters_fit_ph = {}
         for param_name in model_parameters_ph:
             if param_name in self.param_ranges:
                 if param_name.endswith('_pd_type'):
@@ -104,7 +104,11 @@ class SAS_Fitter:
                     model_parameters[param_name] = param_values
                 elif len(param_values) == 3:
                     # If there are three values, set the parameter to the first value and allow it to vary between the second and third values
-                    model_parameters_fit[param_name] = Parameter(param_values[0], limits=(0,inf), name=param_name).range(param_values[1], param_values[2])
+                    model_parameters_fit_ph[param_name] = Parameter(param_values[0], limits=(0,inf), name=param_name).range(param_values[1], param_values[2])
+        if model_parameters_fit is None:
+            model_parameters_fit = model_parameters_fit_ph
+        else:
+            model_parameters_fit = model_parameters_fit
 
         # Create the problem
         problem = self.make_problem(kernel, model_parameters, model_parameters_fit, smearing)
