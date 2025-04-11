@@ -9,8 +9,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from bayes_opt import BayesianOptimization
 from sklearn.metrics import log_loss
-from src.data_processing.utils import load_hdf5_data
-from src.visualization.utils import plot_log_loss, plot_confusion_matrix
+from SAXS_analysis.data_processing.utils import load_hdf5_data
+from SAXS_analysis.visualization.utils import plot_log_loss, plot_confusion_matrix
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, learning_rate, early_stopping_rounds):
     params = {
@@ -146,7 +148,7 @@ def predict_formfactor(data, MLName, class_names):
     """
     # Load the model from a file
     model = xgb.Booster()
-    model.load_model(MLName)
+    model.load_model(ROOT_DIR / MLName)
 
     # Create the DMatrix
     dataset = xgb.DMatrix(data[:,1].reshape(1, -1))

@@ -1,13 +1,15 @@
 import xgboost as xgb
 from sklearn.preprocessing import LabelEncoder
-from src.data_processing.utils import load_and_preprocess_data, split_data
-    
+from SAXS_analysis.data_processing.utils import load_and_preprocess_data, split_data
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
+
 def process_data_classification(file_name: str, num_data_points: int = int(9e15), 
                               normalize: bool = True, qmin: float = 0.001, 
                               qmax: float = 1.5) -> tuple:
     """Process data for classification task."""
     # Load and preprocess the data
-    X, y = load_and_preprocess_data(file_name, num_data_points, qmin, qmax)
+    X, y = load_and_preprocess_data(ROOT_DIR / file_name, num_data_points, qmin, qmax)
 
     # Split the data
     X_train, X_val, X_test, y_train, y_val, y_test = split_data(X, y, normalize)
@@ -38,4 +40,4 @@ def load_classification_model(model_path: str):
     Returns:
         xgb.Booster: The loaded model.
     """
-    return xgb.Booster(model_file=model_path)
+    return xgb.Booster(model_file=ROOT_DIR / model_path)

@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utils.constants import ROOT_DIR
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import os
 
-def plot_random_data(X, y, num_plots=3, save_path=os.path.join(ROOT_DIR, 'plots', 'random_data.png')):
+def plot_random_data(X, y, num_plots=3, save_path=ROOT_DIR / 'plots' / 'random_data.png'):
     # Define the x-axis
     x_axis = np.linspace(0.001, 1.5, 1000)
 

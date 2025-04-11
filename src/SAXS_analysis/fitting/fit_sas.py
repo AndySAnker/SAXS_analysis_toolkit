@@ -5,9 +5,11 @@ from sasmodels.core import load_model
 from sasmodels.bumps_model import Model
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utils.parameter_ranges import param_ranges
-from src.utils.size_distribution_models import size_distribution_models
-from src.data_processing.utils import load_and_process_SAS_data
+from SAXS_analysis.utils.parameter_ranges import param_ranges
+from SAXS_analysis.utils.size_distribution_models import size_distribution_models
+from SAXS_analysis.data_processing.utils import load_and_process_SAS_data
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 class SAS_Fitter:
     """
@@ -79,7 +81,7 @@ class SAS_Fitter:
         """
 
         # Load the model and get the parameters
-        kernel = load_model(formfactor)
+        kernel = load_model(ROOT_DIR / formfactor)
         model_parameters_ph = dict()
         # Get the names of the parameters and update the model_parameters attribute
         model_parameters_ph = [param.name for param in kernel.info.parameters.call_parameters] 

@@ -1,11 +1,11 @@
 import os
 import argparse
 import time
-from src.utils.configs import load_config
-from src.fitting.fit_sas import SAS_Fitter
+from SAXS_analysis.utils.configs import load_config
+from SAXS_analysis.fitting.fit_sas import SAS_Fitter
 from sklearn.metrics import accuracy_score
-from src.data_processing.utils import load_hdf5_data
-from src.utils.logging import setup_logging
+from SAXS_analysis.data_processing.utils import load_hdf5_data
+from SAXS_analysis.utils.logging import setup_logging
 
 class Result:
     def __init__(self, formfactor, goodness_of_fit, R_w, index, logger):

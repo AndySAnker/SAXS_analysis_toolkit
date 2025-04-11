@@ -3,12 +3,13 @@ import random
 import os
 import h5py
 import multiprocessing
-from src.utils.constants import ROOT_DIR
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 from sasmodels.core import load_model
 from sasmodels.direct_model import DirectModel
 from sasmodels.data import empty_data1D
-from src.utils.parameter_ranges import param_ranges
-from src.data_processing.utils import normalize_intensity
+from SAXS_analysis.utils.parameter_ranges import param_ranges
+from SAXS_analysis.data_processing.utils import normalize_intensity
 
 #Can I stop SasView trying to use my GPUs?
 #Yes. Create a system environment variable called SAS_OPENCL and give it the value ‘None’.
@@ -58,7 +59,7 @@ class SAS_Simulator:
         self.model_str = model_str
         self.q = q
         self.resolution = resolution
-        self.model = load_model(self.model_str)
+        self.model = load_model(ROOT_DIR / self.model_str)
         self.model_parameters = dict()
         # Get the names of the parameters and update the model_parameters attribute
         self.model_parameters[self.model_str] = [param.name for param in self.model.info.parameters.call_parameters] 

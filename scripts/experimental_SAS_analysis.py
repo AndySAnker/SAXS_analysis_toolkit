@@ -1,8 +1,8 @@
-from src.utils.formfactors import formfactor_params
-from src.regression.utils import load_regression_model
-from src.classification.utils import load_classification_model, process_data_classification
-from src.data_processing.utils import load_and_process_SAS_data
-from src.fitting.fit_sas import SAS_Fitter
+from SAXS_analysis.utils.formfactors import formfactor_params
+from SAXS_analysis.regression.utils import load_regression_model
+from SAXS_analysis.classification.utils import load_classification_model, process_data_classification
+from SAXS_analysis.data_processing.utils import load_and_process_SAS_data
+from SAXS_analysis.fitting.fit_sas import SAS_Fitter
 import numpy as np
 import xgboost as xgb
 import matplotlib.pyplot as plt

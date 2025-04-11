@@ -1,9 +1,11 @@
 import os
 import logging
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def setup_logging(config):
     # Create logs directory if it doesn't exist
-    log_dir = os.path.join('logs', f"{config['experiment_name']} - {config['experiment_id']}")
+    log_dir = os.path.join(ROOT_DIR / 'logs', f"{config['experiment_name']} - {config['experiment_id']}")
     os.makedirs(log_dir, exist_ok=True)
 
     # Set up logging

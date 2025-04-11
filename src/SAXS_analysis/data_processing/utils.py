@@ -4,13 +4,15 @@ import sasmodels.data
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import ast
-from src.utils.formfactors import formfactor_params
+from SAXS_analysis.utils.formfactors import formfactor_params
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     """
     Load data from an HDF5 file, shuffle it, and prepare data for ML purposes.
     """
-    with h5py.File(filename, 'r') as f:
+    with h5py.File(ROOT_DIR / filename, 'r') as f:
         X = f['SAXS_dataset'][()]
         y = f['formfactor'][()][:len(X)]
     
@@ -38,16 +40,16 @@ def load_and_process_SAS_data(data_source=None, x=None, y=None, z=None, qmin=Non
             try:
                 # Try different delimiters and ensure float dtype
                 try:
-                    data = np.loadtxt(data_source, delimiter=',', dtype=float)
+                    data = np.loadtxt(ROOT_DIR / data_source, delimiter=',', dtype=float)
                 except ValueError:
                     try:
-                        data = np.loadtxt(data_source, delimiter=' ', dtype=float)
+                        data = np.loadtxt(ROOT_DIR / data_source, delimiter=' ', dtype=float)
                     except ValueError:
-                        data = np.loadtxt(data_source, delimiter='\t', dtype=float)
+                        data = np.loadtxt(ROOT_DIR / data_source, delimiter='\t', dtype=float)
             except Exception as e:
                 print(f"Error loading data from {data_source}: {e}")
                 # Debug information
-                with open(data_source, 'r') as f:
+                with open(ROOT_DIR / data_source, 'r') as f:
                     print("First few lines of file:")
                     print(f.read(200))
                 raise
@@ -149,13 +151,13 @@ def load_and_preprocess_data(file_name: str, num_data_points: int = int(9e15),
         tuple: (X, y) or (X, y, formfactors) depending on target_formfactor parameter
     """
     # First load the data
-    with h5py.File(file_name, 'r') as f:
+    with h5py.File(ROOT_DIR / file_name, 'r') as f:
         X = f['SAXS_dataset'][()]
         if target_formfactor:
             y = f['parameters_formfactor'][()][:len(X)]
             all_formfactors = np.array([x[0].decode() for x in f['formfactor'][()][:len(X)]])
         else:
-            Datafiles, y = load_hdf5_data(file_name, num_data_points, qmin, qmax)
+            Datafiles, y = load_hdf5_data(ROOT_DIR / file_name, num_data_points, qmin, qmax)
             X = Datafiles[:, :, :]  # Extract intensity data
 
             # Only use the intensity data

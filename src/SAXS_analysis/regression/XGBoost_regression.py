@@ -10,7 +10,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.metrics import log_loss
 import ast 
-from src.utils.formfactors import formfactor_params, formfactors_original
+from SAXS_analysis.utils.formfactors import formfactor_params, formfactors_original
+import SAXS_analysis
+ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate, early_stopping_rounds):
     params = {'max_depth': int(max_depth),
@@ -26,7 +28,7 @@ def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate, early_stopping_ro
     return -log_loss(y_val, y_val_pred)
 
 def process_data(file_name, formfactor, num_data_points=9e15):
-    f = h5py.File(file_name, 'r')
+    f = h5py.File(ROOT_DIR / file_name, 'r')
     X = f['SAXS_dataset'][()]
     y = f['parameters_formfactor'][()][:len(X)]
     formfactors = f['formfactor'][()][:len(X)]
@@ -209,7 +211,7 @@ def predict_parameters(data, MLName, formfactor, param_ranges):
     
     # Load the model from a file
     model = xgb.Booster()
-    model.load_model(f'XGBoost_models_parameters/XGBoost_model_{formfactor}_{MLName}.json')
+    model.load_model(ROOT_DIR / f'XGBoost_models_parameters/XGBoost_model_{formfactor}_{MLName}.json')
 
     # Create the DMatrix
     dataset = xgb.DMatrix(data[:,1].reshape(1, -1))
