@@ -145,16 +145,3 @@ class SAS_Fitter:
         problem = bumps.fitproblem.FitProblem(experiment)
         return problem
     
-    def plot_sas_data(self):
-        plt.clf()
-        plt.plot(self.data.x, self.data.y, label='Data')
-        plt.plot(self.data.x, self.I_calc, label='Fitted')
-        plt.legend()
-        plt.show()
-    
-
-
-
-
-
-

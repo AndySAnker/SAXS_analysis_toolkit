@@ -109,7 +109,7 @@ for j, param in enumerate(all_parameters):
 
 print("\n  Using regression model predictions as initial parameters:")
 for param, value in predicted_values.items():
-    print(f"    {param}: {value:.6f}")
+    print(f"    {param}: {value:.4f}")
 
 # Create a dictionary with Parameter objects for fitting
 model_parameters_fit = {}
@@ -145,23 +145,27 @@ Icalc, goodness_of_fit, R_w, fitted_params = SAS_Fitter.fit_sas_data(
 
 # Print fitting results
 print("\n  Fit Quality Metrics:")
-print(f"    Goodness of fit: {goodness_of_fit:.6f}")
-print(f"    R_w:            {R_w:.6f}")
+print(f"    Goodness of fit: {goodness_of_fit:.4f}")
+print(f"    R_w:            {R_w:.4f}")
 
 print("\n  Fitted Parameters:")
 for param, value in fitted_params.items():
-    print(f"    {param}: {value:.6f}")
+    if isinstance(value, (int, float)):
+        print(f"    {param}: {value:.4f}")
+    else:
+        print(f"    {param}: {value}")
 
 # Create and save plot
 plt.figure(figsize=(10, 6))
 plt.plot(experimental_SAS_data.x, experimental_SAS_data.y, 'o', markersize=3, label='Experimental')
 plt.plot(experimental_SAS_data.x, Icalc, '-', linewidth=2, label='Fitted')
 plt.loglog()
-plt.xlabel("q (Å$^{-1}$)")
-plt.ylabel("I(q) (cm$^{-1}$)")
-plt.title(f"SAS Fitting - {predicted_formfactor}")
-plt.legend()
+plt.xlabel("q (Å$^{-1}$)", fontsize=8)
+plt.ylabel("I(q) (cm$^{-1}$)", fontsize=8)
+plt.title(f"SAS Fitting - {predicted_formfactor}", fontsize=8)
+plt.legend(fontsize=8)
 plt.grid(True, which="both", ls="--", alpha=0.3)
+plt.tick_params(axis='both', which='both', labelsize=6)
 plt.tight_layout()
 plt.savefig(ROOT_DIR / f"plots/experimental_SAS_fitting_{predicted_formfactor}.png")
 print("\n  Plot saved to: ", ROOT_DIR / f"plots/experimental_SAS_fitting_{predicted_formfactor}.png")
