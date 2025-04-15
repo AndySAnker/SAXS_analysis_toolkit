@@ -18,7 +18,7 @@ Note: Ensure that 'random' and 'numpy' are imported at the beginning of this fil
 from SAXS_analysis.utils.size_distribution_models import size_distribution_models
 
 param_ranges = {
-    'scale': (0, 1),
+    'scale': (0.01, 1),
     'background': (0, 0.001),
     'radius': (3, 50),
     'radius_pd': (0, 0.5),
@@ -75,7 +75,7 @@ param_ranges = {
     'thickness_pd_n': (35, 35),
     'thickness_pd_nsigma': (3, 3),
     'thickness_pd_type': size_distribution_models,
-    'sld': (0, 1),
+    'sld': (1, 1),
     'sld_solvent': (0, 0),
     'sld_core': (0, 1),
     'sld_shell': (0, 1),
