@@ -36,7 +36,11 @@ python scripts/see_version.py
 │   ├── experimental
 │   ├── simulated
 ├── scripts
-│   ├── run_ScatterSolve.py
+│   ├── experimental_SAS_analysis.py
+│   ├── fit_sas.py
+│   ├── simulate_sas.py
+│   ├── train_formfactor_classifier.py
+│   ├── train_parameter_regressor.py
 ├── src
 │   └── SAXS_analysis
 │       ├── classification 
