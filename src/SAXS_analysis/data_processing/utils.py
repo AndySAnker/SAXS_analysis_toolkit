@@ -104,6 +104,8 @@ def normalize_intensity(intensity, normalization_type='peak'):
         return intensity
     elif normalization_type.lower() == 'peak':
         return intensity / np.max(intensity)
+    elif normalization_type.lower() == 'quotient':
+        return 2 * np.log(intensity[..., 1:] / intensity[..., :-1])
     else:
         raise ValueError(f"Unknown normalization type: {normalization_type}")
 
