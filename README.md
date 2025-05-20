@@ -61,7 +61,7 @@ In the scripts folder, we share examples of how to:
 - Train a regression model to estimate model parameters such as size, polydispersity, etc.
 - Analyse an experimental dataset using the above tools
 
-These scripts work with the accompynying config file in the ```configs``` folder in the following way:
+These scripts work with the accompanying config file in the ```configs``` folder in the following way:
 ```
 python scripts/train_formfactor_classifier.py --config configs/classification_config.yaml
 ```
