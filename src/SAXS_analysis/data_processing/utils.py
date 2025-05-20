@@ -9,8 +9,24 @@ import SAXS_analysis
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
-    """
-    Load data from an HDF5 file, shuffle it, and prepare data for ML purposes.
+    """Load data from an HDF5 file and prepare it for ML purposes.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Path to the HDF5 file containing the dataset.
+    num_files : int, optional
+        Number of entries to load from the file. If ``None`` or larger than the
+        number of available entries, all entries are loaded.
+    qmin, qmax : float, optional
+        q-range used to generate the accompanying q values.
+
+    Returns
+    -------
+    tuple
+        ``(Datafiles, y_decoded)`` where ``Datafiles`` is an array of shape
+        ``(num_files, 2, 1000)`` containing q and intensity and ``y_decoded`` is
+        the corresponding formfactor labels.
     """
     with h5py.File(ROOT_DIR / filename, 'r') as f:
         X = f['SAXS_dataset'][()]
@@ -22,11 +38,17 @@ def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     y = y[indices]
     y = np.array(y).astype(str)
     y_decoded = np.unique(y, axis=1)
-    
+
+    # Determine how many entries to return
+    if num_files is None:
+        num_files = X.shape[0]
+    else:
+        num_files = min(int(num_files), X.shape[0])
+
     q = np.linspace(qmin, qmax, 1000)
     q_repeated = np.repeat(q[np.newaxis, :], num_files, axis=0)
     Datafiles = np.stack((q_repeated, X[:num_files]), axis=1)
-    
+
     return Datafiles, y_decoded[:num_files]
 
 def load_and_process_SAS_data(data_source=None, x=None, y=None, z=None, qmin=None, qmax=None, 

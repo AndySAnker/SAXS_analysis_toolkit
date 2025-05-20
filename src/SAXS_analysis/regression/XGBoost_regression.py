@@ -222,8 +222,9 @@ def predict_parameters(data, MLName, formfactor, param_ranges):
     # Override the parameters in param_ranges with the predicted parameters
     for param_name in formfactor_params[formfactor]:
         param_index = formfactor_params[formfactor].index(param_name)
-        param_values = y_pred[:,param_index]
-        if param_values[0] < param_ranges[param_name][1] and param_values[0] > param_ranges[param_name][2]:
-            param_ranges[param_name][0] = param_values[0]
+        param_values = y_pred[:, param_index]
+        # Update only if the prediction lies within the allowed range
+        if param_ranges[param_name][1] <= param_values[0] <= param_ranges[param_name][2]:
+            param_ranges[param_name][0] = float(param_values[0])
 
     return None
