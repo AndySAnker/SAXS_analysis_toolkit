@@ -1,17 +1,17 @@
 # Experiment identification
-experiment_id: '00001'  # Unique identifier for this experiment
+experiment_id: '00002'  # Unique identifier for this experiment
 experiment_name: 'regression_test'  # Descriptive name for the experiment
 
 data:
-  file_name: "SAXS_dataset_100000_floatfloat16_structureFactor0.0percent_powerlaw0.0percent_qmin0.001_qmax1.5_numPoints1000_resolutionMin0.0_resolutionMax0.0_normalisationNone_noiseFalse.h5"
+  file_name: "SAXS_dataset_100000_floatfloat16_structureFactor0.0percent_powerlaw0.0percent_qmin0.001_qmax1.5_numPoints1000_resolutionMin0.0_resolutionMax0.0_normalisationQuotient_noiseFalse.h5"
   num_data_points: 100000
-  normalise_data: false
+  normalise_data: quotient
   plot_data: false
   formfactors: ['sphere', 'cylinder', 'ellipsoid']
 
 model:
   hyperparameter_optimisation: false
-  use_gpu: true
+  use_gpu: false
   early_stopping_rounds: 25
   model_save_path: "XGBoost_model_{num_data_points}_normData{normalise_data}_earlyStopping{early_stopping_rounds}_hyperparameter{hyperparameter_optimisation}"
   class_names_save_path: "class_names_{num_data_points}_normData{normalise_data}_earlyStopping{early_stopping_rounds}_hyperparameter{hyperparameter_optimisation}.npy"
@@ -21,4 +21,4 @@ evaluation:
   plot_confusion_matrix: false
 
 # Verbosity level
-verbose: 2
+verbose: 1

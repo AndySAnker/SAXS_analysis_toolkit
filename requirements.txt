@@ -9,3 +9,8 @@ bumps
 pandas
 scikit-learn
 tqdm
+sklearn
+joblib
+torch
+emcee
+corner

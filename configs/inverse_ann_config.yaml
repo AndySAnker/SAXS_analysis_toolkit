@@ -1,0 +1,29 @@
+# Experiment identification
+experiment_id: '00003'  # Unique identifier for this experiment
+experiment_name: 'inverse_regression_test'  # Descriptive name for the experiment
+
+data:
+  file_name: "data/simulated/SAXS_dataset_100000_floatfloat16_structureFactor0.0percent_powerlaw0.0percent_qmin0.001_qmax1.5_numPoints1000_resolutionMin0.0_resolutionMax0.0_normalisationQuotient_noiseFalse.h5"
+  formfactors: ['sphere', 'cylinder', 'ellipsoid']
+
+model:
+  num_epochs: 1000
+  learning_rate: 0.001
+  batch_size: 32
+  model_save_path: "models/regression/ann_inverse"
+
+  early_stopping:
+    enabled: true
+    patience: 25        
+    min_delta: 0.0001   
+
+  reduce_lr_on_plateau:
+    enabled: true
+    mode: min
+    factor: 0.5
+    patience: 5
+    min_lr: 1e-6
+    verbose: true
+
+# Verbosity level
+verbose: 1

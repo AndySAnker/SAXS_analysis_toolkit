@@ -6,6 +6,8 @@ from sklearn.preprocessing import StandardScaler
 import ast
 from SAXS_analysis.utils.formfactors import formfactor_params
 import SAXS_analysis
+import joblib
+from scipy.interpolate import interp1d
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
@@ -95,7 +97,7 @@ def normalize_intensity(intensity, normalization_type='peak'):
     Parameters:
     intensity (numpy.ndarray): The scattering intensity to normalize.
     normalization_type (str): The type of normalization to apply. 
-                              Options are 'None' or 'peak'. Default is 'peak'.
+                              Options are 'None', 'peak' or 'quotient'. Default is 'peak'.
     
     Returns:
     numpy.ndarray: The normalized intensity.
@@ -213,12 +215,15 @@ def split_data(X: np.ndarray, y: np.ndarray, normalize: bool = False) -> tuple:
     # Split train into train/val
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
 
-
     if normalize:
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_val = scaler.transform(X_val)
         X_test = scaler.transform(X_test)
+
+        # Save the scaler
+        scaler_dir = ROOT_DIR / "scalers"
+        joblib.dump(scaler, scaler_dir / "classification_standard_scaler.joblib")
 
     return X_train, X_val, X_test, y_train, y_val, y_test
 
