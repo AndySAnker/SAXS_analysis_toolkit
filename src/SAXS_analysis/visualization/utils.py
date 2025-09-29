@@ -97,11 +97,11 @@ def plot_prediction_error_histograms(model, test_loader, scaler, formfactor, roo
 
     # Define parameter names by formfactor
     if formfactor == "sphere":
-        parameter_names = ["Radius (nm)", "Polydispersity"]
+        parameter_names = ["Radius (A)", "Polydispersity"]
     elif formfactor == "ellipsoid":
-        parameter_names = ["Radius_Polar (nm)", "Radius_Equatorial (nm)"]
+        parameter_names = ["Radius_Polar (A)", "Radius_Equatorial (nm)"]
     elif formfactor == "cylinder":
-        parameter_names = ["Radius (nm)", "Radius Pd", "Length (nm)", "Length Pd"]
+        parameter_names = ["Radius (A)", "Radius Pd", "Length (A)", "Length Pd"]
     else:
         parameter_names = [f"Parameter {i}" for i in range(y_pred.shape[1])]
 
@@ -204,9 +204,46 @@ def save_corner_plot(flat_chain, map_estimate, row_index=None, true_input=None,
     axes[0, 0].legend(handles=handles)
 
     # Save figure
-    filename = f"corner_plot_row_{row_index}.png" if row_index is not None else "corner_plot.png"
+    filename = f"corner_plot_{row_index}.png" if row_index is not None else "corner_plot.png"
     fig_path = os.path.join(save_dir, filename)
     fig.savefig(fig_path, dpi=300)
     plt.close(fig)
     print(f"[Plot] Corner plot saved to {fig_path}")
 
+def plot_experimental_data(q_raw, Iq_raw, std_raw,
+                           q_interp, Iq_interp, std_interp,
+                           save_path, data_stem):
+    """
+    Plot raw and interpolated SAXS data.
+    """
+    plt.figure(figsize=(6, 4))
+    plt.errorbar(q_raw, Iq_raw, yerr=std_raw, fmt='x', markersize=3, alpha=0.5,
+                 color='blue', markerfacecolor='none', label='Raw data')      
+    plt.errorbar(q_interp, Iq_interp, yerr=std_interp, fmt='o', markersize=4, alpha=0.9,
+                 color='orange', markerfacecolor='none', label='Interpolated data')  
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel('q [1/nm]')
+    plt.ylabel('I(q)')
+    plt.title(f"Raw and Interpolated SAXS Data: ({data_stem})") 
+    plt.legend()
+    plt.grid(True, which='both', ls='--', lw=0.5)
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+def plot_qt_data(q_mid_padded, qt_padded, qt_std_padded, save_path, data_stem):
+    """
+    Plot padded quotient-transformed SAXS data.
+    """
+    plt.figure(figsize=(6, 4))
+    plt.errorbar(q_mid_padded, qt_padded, yerr=qt_std_padded, fmt='o', markersize=4, alpha=0.9,
+                 color='orange', markerfacecolor='none', label='QT Padded')
+    plt.xscale('log')
+    plt.yscale('linear')
+    plt.xlabel('q [1/nm]')
+    plt.ylabel('QT-I(q)')
+    plt.title(f'Quotient-Transformed SAXS Data ({data_stem})')
+    plt.legend()
+    plt.grid(True, which='both', ls='--', lw=0.5)
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()

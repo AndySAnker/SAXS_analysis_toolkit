@@ -24,11 +24,11 @@ def run_mcmc(p0, nwalkers, niter, y, y_std, row_index, s_ml_model, priors_for_in
     ndim = len(p0[0])
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(y, y_std, s_ml_model, priors_for_inverse_ann))
 
-    print(f"[Main] Running burn-in for row {row_index}...")
+    print(f"[Main] Running burn-in...")
     p0, _, _ = sampler.run_mcmc(p0, burn_in, progress=True)
     sampler.reset()
 
-    print(f"[Main] Running production for row {row_index}...")
+    print(f"[Main] Running production for...")
     sampler.run_mcmc(p0, niter, progress=True)
 
     flat_chain = sampler.get_chain(flat=True)
