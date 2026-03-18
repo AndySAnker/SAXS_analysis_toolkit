@@ -36,11 +36,15 @@ python scripts/see_version.py
 ├── data
 │   ├── experimental
 │   ├── simulated
+├── logs
 ├── scripts
 │   ├── experimental_SAS_analysis.py
 │   ├── fit_sas.py
+│   ├── mcmc.py
 │   ├── simulate_sas.py
+│   ├── train_ann_regressor.py
 │   ├── train_formfactor_classifier.py
+│   ├── train_inverse_ann_regressor.py
 │   ├── train_parameter_regressor.py
 ├── src
 │   └── SAXS_analysis
