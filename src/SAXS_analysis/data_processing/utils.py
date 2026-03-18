@@ -17,6 +17,7 @@ def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     with h5py.File(ROOT_DIR / filename, 'r') as f:
         X = f['SAXS_dataset'][()]
         y = f['formfactor'][()][:len(X)]
+        q_file = f['q'][()] if 'q' in f else None
     
     indices = np.arange(X.shape[0])
     np.random.shuffle(indices)
@@ -25,9 +26,25 @@ def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     y = np.array(y).astype(str)
     y_decoded = np.unique(y, axis=1)
     
-    q = np.linspace(qmin, qmax, 999)
-    #q = np.linspace(qmin, qmax, 1000)
-    q_repeated = np.repeat(q[np.newaxis, :], num_files, axis=0)
+    if num_files is None:
+        num_files = X.shape[0]
+
+    # Build a q-grid matching the stored intensity length.
+    # For quotient-normalization, intensities have length len(q)-1.
+    if q_file is not None:
+        q_arr = np.asarray(q_file).ravel()
+        if q_arr.size == X.shape[1] + 1:
+            q_arr = q_arr[1:]
+        if q_arr.size != X.shape[1]:
+            q_arr = np.linspace(q_arr.min(), q_arr.max(), X.shape[1])
+    else:
+        if qmin is None:
+            qmin = 0.001
+        if qmax is None:
+            qmax = 1.5
+        q_arr = np.linspace(qmin, qmax, X.shape[1])
+
+    q_repeated = np.repeat(q_arr[np.newaxis, :], num_files, axis=0)
 
     #print("q_repeated shape:", q_repeated.shape)
     #print("X[:num_files] shape:", X[:num_files].shape)

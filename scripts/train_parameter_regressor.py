@@ -34,6 +34,9 @@ def main():
         logger.debug(f"- Early stopping rounds: {config['model']['early_stopping_rounds']}")
         logger.debug(f"- Model save path: {ROOT_DIR / 'models' / 'regression' / config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])}")
 
+        plot_dir = Path(ROOT_DIR) / "plots" / config["experiment_name"]
+        plot_dir.mkdir(parents=True, exist_ok=True)
+
         for formfactor in config['data']['formfactors']:
             logger.info(f"Processing data for formfactor: {formfactor}")
             # Load and process data
@@ -71,7 +74,8 @@ def main():
                 dval=dval,
                 dtest=dtest,
                 formfactor=formfactor,
-                plot_results=config['evaluation']['plot_results']
+                plot_results=config['evaluation']['plot_results'],
+                save_dir=str(plot_dir)
             )
 
     except Exception as e:

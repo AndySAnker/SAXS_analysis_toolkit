@@ -13,6 +13,10 @@ import joblib
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def plot_random_data(X, y, num_plots=3, save_path='random_data.png'):
+    plot_dir = Path(ROOT_DIR) / "plots"
+    plot_dir.mkdir(parents=True, exist_ok=True)
+    (plot_dir / Path(save_path)).parent.mkdir(parents=True, exist_ok=True)
+
     # Define the x-axis
     x_axis = np.linspace(0.001, 1.5, 1000)
 
@@ -32,10 +36,14 @@ def plot_random_data(X, y, num_plots=3, save_path='random_data.png'):
                 axs[j, k].set_xscale('log')
                 axs[j, k].set_yscale('log')
         plt.tight_layout()
-        plt.savefig(ROOT_DIR / 'plots' / save_path)
+        plt.savefig(plot_dir / save_path)
         plt.close()
 
 def plot_log_loss(train_loss, val_loss, save_path='log_loss.png'):
+    plot_dir = Path(ROOT_DIR) / "plots"
+    plot_dir.mkdir(parents=True, exist_ok=True)
+    (plot_dir / Path(save_path)).parent.mkdir(parents=True, exist_ok=True)
+
     epochs = len(train_loss)
     x_axis = range(epochs)
 
@@ -47,10 +55,14 @@ def plot_log_loss(train_loss, val_loss, save_path='log_loss.png'):
     plt.xlabel('Epochs', fontsize=8)
     plt.xticks(fontsize=6)
     plt.yticks(fontsize=6)
-    plt.savefig(ROOT_DIR / 'plots' / save_path)
+    plt.savefig(plot_dir / save_path)
     plt.close()
 
 def plot_confusion_matrix(y_true, y_pred, class_names, save_path='confusion_matrix.png'):
+    plot_dir = Path(ROOT_DIR) / "plots"
+    plot_dir.mkdir(parents=True, exist_ok=True)
+    (plot_dir / Path(save_path)).parent.mkdir(parents=True, exist_ok=True)
+
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(10, 7))
     ax = sns.heatmap(cm, annot=True, fmt='d', xticklabels=class_names, yticklabels=class_names)
@@ -61,10 +73,13 @@ def plot_confusion_matrix(y_true, y_pred, class_names, save_path='confusion_matr
     colorbar.ax.tick_params(labelsize=6)
     plt.xticks(fontsize=6)
     plt.yticks(fontsize=6)
-    plt.savefig(ROOT_DIR / 'plots' / save_path)
+    plt.savefig(plot_dir / save_path)
     plt.close()
 
-def plot_ann_loss(train_losses, val_losses, formfactor):
+def plot_ann_loss(train_losses, val_losses, formfactor, plot_dir=None):
+    plot_dir = Path(plot_dir) if plot_dir is not None else (Path(ROOT_DIR) / "plots")
+    plot_dir.mkdir(parents=True, exist_ok=True)
+
     plt.figure()
     plt.plot(train_losses, label="Train Loss")
     plt.plot(val_losses, label="Validation Loss")
@@ -73,10 +88,10 @@ def plot_ann_loss(train_losses, val_losses, formfactor):
     plt.title(f"Training vs Validation Loss ({formfactor})")
     plt.legend()
     plt.grid(True)
-    plt.savefig(ROOT_DIR / 'plots' / f"loss_curve_{formfactor}.png")
+    plt.savefig(plot_dir / f"loss_curve_{formfactor}.png")
     plt.close()
 
-def plot_prediction_error_histograms(model, test_loader, scaler, formfactor, root_dir):
+def plot_prediction_error_histograms(model, test_loader, scaler, formfactor, root_dir=None, plot_dir=None):
     model.eval()
     y_pred_list = []
     y_true_list = []
@@ -106,7 +121,12 @@ def plot_prediction_error_histograms(model, test_loader, scaler, formfactor, roo
         parameter_names = [f"Parameter {i}" for i in range(y_pred.shape[1])]
 
     # Create plots directory
-    plot_dir = Path(root_dir) / "plots"
+    if plot_dir is None:
+        if root_dir is None:
+            root_dir = ROOT_DIR
+        plot_dir = Path(root_dir) / "plots"
+    else:
+        plot_dir = Path(plot_dir)
     plot_dir.mkdir(parents=True, exist_ok=True)
 
     # Plot individual error histograms

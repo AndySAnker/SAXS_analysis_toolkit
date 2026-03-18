@@ -70,18 +70,22 @@ if __name__ == '__main__':
     # Save the model and class names
     logger.info("Saving model and class names...")
     model_save_path = ROOT_DIR / 'models' / 'classification' / config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])
+    model_save_path.parent.mkdir(parents=True, exist_ok=True)
     model.save_model(model_save_path)
-    np.save(ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']), class_names)
+    class_names_path = ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])
+    class_names_path.parent.mkdir(parents=True, exist_ok=True)
+    np.save(class_names_path, class_names)
     logger.info(f"Model saved to {model_save_path}")
     logger.info(f"Class names saved to {ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path']}")
 
     # Evaluate the model
     logger.info("Starting model evaluation...")
 
+    plot_prefix = f"{config['experiment_name']}/"
     train_accuracy, val_accuracy, test_accuracy, baseline_accuracy = evaluate_model(
         model, evals_result, dtrain, dval, dtest, class_names,
         plot_results=config['evaluation']['plot_results'],
-        save_basename=config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']).replace('.model', '')
+        save_basename=plot_prefix + config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']).replace('.model', '')
     )
     logger.info(f"Model evaluation complete. Train accuracy: {train_accuracy*100:.4f}%, Validation accuracy: {val_accuracy*100:.4f}%, Test accuracy: {test_accuracy*100:.4f}%, Baseline accuracy: {baseline_accuracy*100:.4f}%")
 

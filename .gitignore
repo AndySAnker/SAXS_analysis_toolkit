@@ -64,6 +64,7 @@ Thumbs.db
 plots/
 logs/
 models/
+scalers/
 ErrorLogFiles/
 ErrorLogSbatchFiles/
 
@@ -147,6 +148,6 @@ dmypy.json
 .pyre/
 
 slurm/
-*local
+*_local*
 __pycache__
 scripts/experimental_SAS_analysis.py

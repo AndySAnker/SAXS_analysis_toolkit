@@ -13,6 +13,7 @@ import ast
 from SAXS_analysis.utils.formfactors import formfactor_params, formfactors_original
 import SAXS_analysis
 ROOT_DIR = SAXS_analysis.ROOT_DIR
+import os
 
 def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate, early_stopping_rounds):
     params = {'max_depth': int(max_depth),
@@ -75,21 +76,27 @@ def process_data(file_name, formfactor, num_data_points=9e15):
     
     return dtrain, dval, dtest
 
-def evaluate_model(model, evals_result, dtrain, dval, dtest, formfactor, plot_results=True):
+def evaluate_model(model, evals_result, dtrain, dval, dtest, formfactor, plot_results=True, save_dir=None, show_plots=False):
     # Retrieve performance metrics
     results = evals_result
     epochs = len(results['train']['rmse'])
     x_axis = range(0, epochs)
 
     if plot_results:
-        # Plot log loss
         fig, ax = plt.subplots()
         ax.plot(x_axis, results['train']['rmse'], label='Train')
         ax.plot(x_axis, results['eval']['rmse'], label='Validation')
         ax.legend()
-        plt.ylabel('Log Loss')
-        plt.title('XGBoost Log Loss')
-        plt.show()
+        plt.ylabel('RMSE')
+        plt.title(f'XGBoost RMSE ({formfactor})')
+        plt.grid(True)
+
+        if save_dir is not None:
+            os.makedirs(save_dir, exist_ok=True)
+            plt.savefig(os.path.join(save_dir, f"{formfactor}_rmse_curve.png"), dpi=200, bbox_inches="tight")
+        if show_plots:
+            plt.show()
+        plt.close()
 
     # Reshape the labels
     labels_train = dtrain.get_label().reshape(dtrain.num_row(), -1)
