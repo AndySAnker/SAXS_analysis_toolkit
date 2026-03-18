@@ -47,6 +47,9 @@ python scripts/see_version.py
 │       ├── classification 
 │       ├── data_processing  
 │       ├── fitting
+│       ├── forward_ann
+│       ├── inverse_ann
+│       ├── mcmc
 │       ├── regression
 │       ├── simulation
 │       ├── utils
