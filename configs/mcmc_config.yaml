@@ -1,0 +1,25 @@
+# Experiment identification
+experiment_id: '00004' # Unique identifier for this experiment
+experiment_name: 'mcmc' # Descriptive name for the experiment
+
+data:
+  h5_file: 'data/simulated/SAXS_dataset_10000_floatfloat16_structureFactor0.0percent_powerlaw0.0percent_qmin0.001_qmax1.5_numPoints1000_resolutionMin0.0_resolutionMax0.0_normalisationQuotient_noiseFalse.h5'
+  classifier_model: models/classification/XGBoost_model_100000_normDataQuotient_earlyStopping25_hyperparameterFalse.model
+  classifier_class_names: models/classification/class_names_100000_normDataQuotient_earlyStopping25_hyperparameterFalse.npy
+  
+  forward_model_paths:
+    sphere: models/regression/ann_forward/sphere_forward.pth
+    ellipsoid: models/regression/ann_forward/ellipsoid_forward.pth
+    cylinder: models/regression/ann_forward/cylinder_forward.pth
+  
+  inverse_model_paths:
+    sphere: models/regression/ann_inverse/sphere_inverse.pth
+    ellipsoid: models/regression/ann_inverse/ellipsoid_inverse.pth
+    cylinder: models/regression/ann_inverse/cylinder_inverse.pth
+
+row_index : 2501
+nwalkers: 25 
+burn_in: 1234
+niter: 5678
+
+verbose: 1

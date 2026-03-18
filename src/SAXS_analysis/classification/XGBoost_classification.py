@@ -112,6 +112,24 @@ def train_model(dtrain, dval, early_stopping_rounds=25, hyperparameter_optimisat
 
     return model, evals_result
 
+def classify_formfactor(saxs_profile, model_path, class_names_path):
+    """
+    This function takes a 1D saxs_profile and uses the classification model to output the top class
+
+    """
+    # Load classification model
+    model = xgb.Booster()
+    model.load_model(str(model_path))
+
+    class_names = np.load(class_names_path)
+    input_data = saxs_profile.reshape(1, -1)
+    dmatrix = xgb.DMatrix(input_data)
+    y_prob = model.predict(dmatrix)
+
+    top1_index = np.argmax(y_prob)
+    predicted_class = class_names[top1_index]
+    return predicted_class.lower()
+
 def predict_formfactor(data, MLName, class_names):
     """
     Predicts the form factor for given SAXS data using a pre-trained XGBoost model.

@@ -3,7 +3,7 @@ experiment_id: '00003'  # Unique identifier for this experiment
 experiment_name: 'Simulation-medium-3formfactors-noNoiseResolutionNormalisation'  # Descriptive name for the experiment
 
 simulation:
-  num_datasets: 100000 # number of datasets that will be simulated
+  num_datasets: 10 # number of datasets that will be simulated
   output_dir: "data/simulated/" # directory where the simulated datasets will be saved
   dtype: "float16" # datatype of the simulated datasets
   structure_factor_percentage: 0.0 # percentage of datasets that will have a structure factor where 1 is 100 %
@@ -22,11 +22,11 @@ simulation:
   q_range: # q range for the simulation in Å^-1
     start: 0.001
     end: 1.5
-    num_points: 1000
+    num_points: 1001 #additional point because quotient transform reduces the generated data by 1
   resolution: # resolution range for the simulation
     min: 0.0 # min resolution is 0 Å^-1
     max: 0.0 # max resolution is 0.1 Å^-1
-  normalization_type: "None" # Options: "peak", "None"
+  normalization_type: "quotient" # Options: "peak", "None", "quotient"
   add_noise: false # Whether to add Poisson noise to the simulated data
   filename: "SAXS_dataset_{num_datasets}_float{dtype}_structureFactor{structure_factor_percentage}percent_powerlaw{powerlaw_include_chance}percent_qmin{q_range_start}_qmax{q_range_end}_numPoints{q_range_num_points}_resolutionMin{resolution_min}_resolutionMax{resolution_max}_normalisation{normalization_type}_noise{add_noise}.h5" # filename of the simulated datasets
 

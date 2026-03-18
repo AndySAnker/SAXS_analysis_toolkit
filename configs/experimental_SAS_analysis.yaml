@@ -1,0 +1,55 @@
+#  Experiment identification 
+experiment_id: '00004'            # Unique identifier for this experiment
+experiment_name: 'SASDW94_data'   # Descriptive name for the experiment
+
+#  Data loading
+data:
+  data_file: 'data/experimental/SASDW94.dat'  # Path to experimental dataset
+  plot_dir: 'plots'                           # Folder to save plots
+
+# Data preprocessing
+preprocessing:
+  q_split: 0.5 # where to split data (in nm^-1)
+  n_low: 5 # number of points to downsample over in q < q_split
+  n_high: 10 # number of points to downsample over in q > q_split
+
+# ML models
+models:
+  classification:
+    model_path: "models/classification/XGBoost_model_299291_normDataFalse_earlyStopping25_hyperparameterFalse.model" # load classification model
+    class_names_path: "models/classification/class_names_299291_normDataFalse_earlyStopping25_hyperparameterFalse.npy" # load classification labels
+
+  forward:
+    sphere: "models/regression/ann_forward/sphere_forward.pth"
+    ellipsoid: "models/regression/ann_forward/ellipsoid_forward.pth"
+    cylinder: "models/regression/ann_forward/cylinder_forward.pth"
+
+  inverse:
+    sphere: "models/regression/ann_inverse/sphere_inverse.pth"
+    ellipsoid: "models/regression/ann_inverse/ellipsoid_inverse.pth"
+    cylinder: "models/regression/ann_inverse/cylinder_inverse.pth"
+
+# Parameters for form factor models
+parameters:
+  sphere: ["radius", "radius_pd"]
+  ellipsoid: ["radius_polar", "radius_equatorial"]
+  cylinder: ["radius", "radius_pd", "length", "length_pd"]
+
+# Scalers
+scalers:
+  forward:
+    sphere: "scalers/sphere_scaler.joblib"
+    ellipsoid: "scalers/ellipsoid_scaler.joblib"
+    cylinder: "scalers/cylinder_scaler.joblib"
+  inverse:
+    sphere: "scalers/sphere_inverse_scaler.joblib"
+    ellipsoid: "scalers/ellipsoid_inverse_scaler.joblib"
+    cylinder: "scalers/cylinder_inverse_scaler.joblib"
+
+# MCMC parameters    
+mcmc: 
+  nwalkers: 25 # number of walkers for the MCMC sampling 
+  burn_in: 5678 # number of burn-in steps
+  niter: 1234 # number of MCMC sampling steps
+
+verbose: 1

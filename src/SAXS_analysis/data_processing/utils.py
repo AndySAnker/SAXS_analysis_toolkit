@@ -6,6 +6,8 @@ from sklearn.preprocessing import StandardScaler
 import ast
 from SAXS_analysis.utils.formfactors import formfactor_params
 import SAXS_analysis
+import joblib
+from scipy.interpolate import interp1d
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
@@ -23,70 +25,56 @@ def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
     y = np.array(y).astype(str)
     y_decoded = np.unique(y, axis=1)
     
-    q = np.linspace(qmin, qmax, 1000)
+    q = np.linspace(qmin, qmax, 999)
+    #q = np.linspace(qmin, qmax, 1000)
     q_repeated = np.repeat(q[np.newaxis, :], num_files, axis=0)
+
+    #print("q_repeated shape:", q_repeated.shape)
+    #print("X[:num_files] shape:", X[:num_files].shape)
+
     Datafiles = np.stack((q_repeated, X[:num_files]), axis=1)
     
     return Datafiles, y_decoded[:num_files]
 
-def load_and_process_SAS_data(data_source=None, x=None, y=None, z=None, qmin=None, qmax=None, 
-                             error_weighting=None, normalization_type='None'):
-    """
-    Load SAS data from a file, numpy array, or individual x, y, and optionally z arrays.
-    Normalize it, and filter it based on qmin and qmax.
-    """
-    if data_source is not None:
-        if isinstance(data_source, str):
-            try:
-                # Try different delimiters and ensure float dtype
-                try:
-                    data = np.loadtxt(ROOT_DIR / data_source, delimiter=',', dtype=float)
-                except ValueError:
-                    try:
-                        data = np.loadtxt(ROOT_DIR / data_source, delimiter=' ', dtype=float)
-                    except ValueError:
-                        data = np.loadtxt(ROOT_DIR / data_source, delimiter='\t', dtype=float)
-            except Exception as e:
-                print(f"Error loading data from {data_source}: {e}")
-                # Debug information
-                with open(ROOT_DIR / data_source, 'r') as f:
-                    print("First few lines of file:")
-                    print(f.read(200))
-                raise
-        elif isinstance(data_source, np.ndarray):
-            data = data_source.astype(float)
-        else:
-            raise TypeError("data_source must be a string or a numpy array")
-    elif x is not None and y is not None:
-        # Ensure x and y are float arrays
-        x = np.asarray(x, dtype=float)
-        y = np.asarray(y, dtype=float)
-        if z is not None:
-            z = np.asarray(z, dtype=float)
-        data = np.column_stack((x, y)) if z is None else np.column_stack((x, y, z))
-    else:
-        raise ValueError("Either data_source or both x and y must be provided")
-    
-    if qmin is None:
-        qmin = float(np.min(data[:,0]))
-    if qmax is None:
-        qmax = float(np.max(data[:,0]))
+# --- Functions ---
+def load_and_process_SAS_data(data_source, qmin=None, qmax=None):
+    """Load SAS data and filter by qmin/qmax and positive I(q)."""
+    data = np.loadtxt(ROOT_DIR / data_source, dtype=float)
+    q_raw, Iq_raw = data[:,0], data[:,1]
+    std_raw = np.abs(data[:,2]) if data.shape[1] > 2 else np.zeros_like(Iq_raw)
 
-    # Ensure numeric comparisons
-    mask = (data[:,0].astype(float) >= float(qmin)) & \
-           (data[:,0].astype(float) <= float(qmax)) & \
-           (data[:,1].astype(float) > 0)
+    # Set qmin/qmax defaults
+    if qmin is None: qmin = q_raw.min()
+    if qmax is None: qmax = q_raw.max()
 
-    if data.shape[1] > 2:
-        data[:,2] = normalize_intensity(data[:,2], normalization_type)
-        data[:,1] = normalize_intensity(data[:,1], normalization_type)
-        data = sasmodels.data.Data1D(x=data[mask,0], y=data[mask,1], dy=np.abs(data[mask,2]))
-    else:
-        data[:,1] = normalize_intensity(data[:,1], normalization_type)
-        noise = apply_error_weighting(data[mask], error_weighting)
-        data = sasmodels.data.Data1D(x=data[mask,0], y=data[mask,1], dy=noise)
+    # Filter
+    mask = (q_raw >= qmin) & (q_raw <= qmax) & (Iq_raw > 0)
+    return q_raw[mask], Iq_raw[mask], std_raw[mask]
 
-    return data
+def adaptive_downsample(q, Iq, std, q_split=1, n_low=1, n_high=20):
+    """Downsample SAXS data adaptively in low/high q regions."""
+    low_mask = q < q_split
+    high_mask = q >= q_split
+    q_ds = np.concatenate([q[low_mask][::n_low], q[high_mask][::n_high]])
+    Iq_ds = np.concatenate([Iq[low_mask][::n_low], Iq[high_mask][::n_high]])
+    std_ds = np.concatenate([std[low_mask][::n_low], std[high_mask][::n_high]])
+    # Sort by q
+    sort_idx = np.argsort(q_ds)
+    return q_ds[sort_idx], Iq_ds[sort_idx], std_ds[sort_idx]
+
+def interpolate_to_n_points(q, Iq, std, num_points):
+    """Linearly interpolate data to a fixed number of points."""
+    q_interp = np.linspace(q.min(), q.max(), num_points)
+    Iq_interp = np.interp(q_interp, q, Iq)
+    std_interp = np.interp(q_interp, q, std)
+    return q_interp, Iq_interp, std_interp
+
+def quotient_transform(Iq, std):
+    """Compute quotient transform and propagate error."""
+    ratio = Iq[1:] / Iq[:-1]
+    qt = 2 * np.log(ratio)
+    qt_std = 2 * np.sqrt((std[1:]/Iq[1:])**2 + (std[:-1]/Iq[:-1])**2)
+    return qt, qt_std
 
 def normalize_intensity(intensity, normalization_type='peak'):
     """
@@ -95,7 +83,7 @@ def normalize_intensity(intensity, normalization_type='peak'):
     Parameters:
     intensity (numpy.ndarray): The scattering intensity to normalize.
     normalization_type (str): The type of normalization to apply. 
-                              Options are 'None' or 'peak'. Default is 'peak'.
+                              Options are 'None', 'peak' or 'quotient'. Default is 'peak'.
     
     Returns:
     numpy.ndarray: The normalized intensity.
@@ -104,6 +92,8 @@ def normalize_intensity(intensity, normalization_type='peak'):
         return intensity
     elif normalization_type.lower() == 'peak':
         return intensity / np.max(intensity)
+    elif normalization_type.lower() == 'quotient':
+        return 2 * np.log(intensity[..., 1:] / intensity[..., :-1])
     else:
         raise ValueError(f"Unknown normalization type: {normalization_type}")
 
@@ -192,7 +182,6 @@ def load_and_preprocess_data(file_name: str, num_data_points: int = int(9e15),
 
     return X, y
 
-
 def split_data(X: np.ndarray, y: np.ndarray, normalize: bool = False) -> tuple:
     """
     Common data splitting and normalization functionality.
@@ -211,12 +200,15 @@ def split_data(X: np.ndarray, y: np.ndarray, normalize: bool = False) -> tuple:
     # Split train into train/val
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
 
-
     if normalize:
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_val = scaler.transform(X_val)
         X_test = scaler.transform(X_test)
+
+        # Save the scaler
+        scaler_dir = ROOT_DIR / "scalers"
+        joblib.dump(scaler, scaler_dir / "classification_standard_scaler.joblib")
 
     return X_train, X_val, X_test, y_train, y_val, y_test
 
