@@ -12,7 +12,7 @@ If you e.g. use conda, we recommend creating a conda environment for this projec
 ```bash
 conda create -n SAXS_analysis python=3.10
 conda activate SAXS_analysis
-pip install -e .
+python -m pip install -e .
 ```
 
 Otherwise, if you use `uv`, you can install this package by running
@@ -61,10 +61,82 @@ In the scripts folder, we share examples of how to:
 - Train a regression model to estimate model parameters such as size, polydispersity, etc.
 - Analyse an experimental dataset using the above tools
 
-These scripts work with the accompanying config file in the ```configs``` folder in the following way:
+All scripts are driven by YAML config files in `configs/`, grouped by purpose:
+
+- `configs/simulation/`
+- `configs/training/`
+- `configs/analysis/`
+
+For example:
+
+```bash
+python scripts/train_formfactor_classifier.py --config configs/training/classification_config.yaml
 ```
-python scripts/train_formfactor_classifier.py --config configs/classification_config.yaml
+
+### Simulating data
+
+Simulate SAXS datasets to an HDF5 file in `data/simulated/`:
+
+```bash
+python scripts/simulate_sas.py --config configs/simulation/simulation_config.yaml
 ```
+
+**Changing which parameters are simulated**:
+
+- **Parameter bounds / distributions** (used when sampling parameters for simulation and for fitting): `src/SAXS_analysis/utils/parameter_ranges.py` (`param_ranges`).
+- **Which parameters belong to each form factor model**: `src/SAXS_analysis/utils/formfactors.py` (`formfactor_params`).
+
+### Training models
+
+1) **Train a form-factor classifier (XGBoost)**
+
+```bash
+python scripts/train_formfactor_classifier.py --config configs/training/classification_config.yaml
+```
+
+2) **Train a parameter regressor**
+
+- XGBoost regressor:
+
+```bash
+python scripts/train_parameter_regressor.py --config configs/training/regression_config.yaml
+```
+
+- Forward ANN regressor (PyTorch):
+
+```bash
+python scripts/train_ann_regressor.py --config configs/training/forward_ann_config.yaml
+```
+
+- Inverse ANN regressor (PyTorch):
+
+```bash
+python scripts/train_inverse_ann_regressor.py --config configs/training/inverse_ann_config.yaml
+```
+
+The training scripts save models under `models/` and may also write scalers under `scalers/` and plots under `plots/`.
+
+**Changing which parameters the regressors learn**:
+
+- The regressors pull their target parameter list from `src/SAXS_analysis/utils/formfactors.py` (`formfactor_params`). If you add/remove parameters for a form factor, update that mapping (and ensure the parameter exists in `param_ranges`).
+
+### Analysing data
+
+There are two main analysis entry points:
+
+1) **Physics-based fitting of (simulated) datasets** using sasmodels/bumps:
+
+```bash
+python scripts/fit_sas.py --config configs/analysis/fit_config.yaml
+```
+
+2) **Experimental data analysis** (preprocess → classify → regress → MCMC inference):
+
+```bash
+python scripts/experimental_SAS_analysis.py --config configs/analysis/experimental_SAS_analysis.yaml
+```
+
+This pipeline expects the model/scaler paths in `configs/analysis/experimental_SAS_analysis.yaml` to point to existing files (i.e. trained models and saved scalers).
 
 ## License
 

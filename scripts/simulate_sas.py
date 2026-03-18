@@ -66,6 +66,7 @@ if __name__ == '__main__':
                               config['simulation']['resolution']['max']),
             normalization_type=config['simulation']['normalization_type'],
             add_noise=config['simulation']['add_noise'],
+            use_multiprocessing=config['simulation'].get('use_multiprocessing', True),
             logger=logger
         )
     except Exception as e:

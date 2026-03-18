@@ -177,6 +177,7 @@ def simulate_sas_datasets(
     resolution_range=(0.0, 0.1),
     normalization_type='peak',
     add_noise=True,
+    use_multiprocessing=True,
     logger=None
 ):
     logger.info(f"Starting simulation of {num_datasets} datasets")
@@ -220,9 +221,22 @@ def simulate_sas_datasets(
             parameters_powerlaw_dset = f.create_dataset('parameters_powerlaw', (chunk_size[0], 1), maxshape=(None, 1), dtype=h5py.special_dtype(vlen=str))
         logger.debug("Created datasets for form factors, structure factors, and power laws")
 
-        logger.info("Starting multiprocessing pool for simulations")
-        with multiprocessing.Pool() as pool:
-            for index, result in enumerate(pool.imap_unordered(simulate_single, inputs)):
+        # sasmodels lazily compiles/loads model kernels on first use and stores them under ~/.sasmodels.
+        # In practice this can race in multiprocessing (multiple workers trying to build/load the same kernel).
+        # To make local testing robust, we "warm up" compilation in the parent process first.
+        try:
+            for ff in form_factors:
+                sim = SAS_Simulator(ff, q=q, resolution=np.random.uniform(resolution_range[0], resolution_range[1]))
+                sim_params = sim.assign_parameters_model()
+                sim.simulate_SAS(sim_params, add_noise=False, normalization_type=normalization_type)
+        except Exception:
+            # If warmup fails, continue and let the pool surface the real error with tracebacks.
+            pass
+
+        if not use_multiprocessing:
+            logger.info("Running simulations sequentially (multiprocessing disabled)")
+            iterator = (simulate_single(t) for t in inputs)
+            for index, result in enumerate(iterator):
                 q, Iq, dIq, formfactor_model, parameters_formfactor, structurefactor_model, parameters_structurefactor, powerlaw_model, parameters_powerlaw, _ = result
 
                 dset.resize(index + 1, axis=0)
@@ -250,9 +264,45 @@ def simulate_sas_datasets(
                 if (index + 1) % chunk_size[0] == 0:
                     f.flush()
                     logger.info(f"Saved number {index+1} out of {len(inputs)} chunks to DataFile")
-                
+
                 if (index + 1) % 1000 == 0:
                     logger.debug(f"Processed {index+1} datasets")
+        else:
+            logger.info("Starting multiprocessing pool for simulations")
+            # h5py is not fork-safe; use spawn to avoid invalid HDF5 identifiers.
+            ctx = multiprocessing.get_context("spawn")
+            with ctx.Pool() as pool:
+                for index, result in enumerate(pool.imap_unordered(simulate_single, inputs)):
+                    q, Iq, dIq, formfactor_model, parameters_formfactor, structurefactor_model, parameters_structurefactor, powerlaw_model, parameters_powerlaw, _ = result
+
+                    dset.resize(index + 1, axis=0)
+                    dset[index, :] = np.array([Iq]).astype(dtype)
+                    dset_uncertainty.resize(index + 1, axis=0)
+                    dset_uncertainty[index, :] = np.array([dIq]).astype(dtype)
+
+                    formfactor_dset.resize(index + 1, axis=0)
+                    formfactor_dset[index] = str(formfactor_model)
+                    parameters_formfactor_dset.resize(index + 1, axis=0)
+                    parameters_formfactor_dset[index] = str(parameters_formfactor)
+
+                    if structurefactor_include_chance > 0 and structurefactor_model is not None:
+                        structurefactor_dset.resize(index + 1, axis=0)
+                        structurefactor_dset[index] = str(structurefactor_model)
+                        parameters_structurefactor_dset.resize(index + 1, axis=0)
+                        parameters_structurefactor_dset[index] = str(parameters_structurefactor)
+
+                    if powerlaw_include_chance > 0 and powerlaw_model is not None:
+                        powerlaw_dset.resize(index + 1, axis=0)
+                        powerlaw_dset[index] = str(powerlaw_model)
+                        parameters_powerlaw_dset.resize(index + 1, axis=0)
+                        parameters_powerlaw_dset[index] = str(parameters_powerlaw)
+
+                    if (index + 1) % chunk_size[0] == 0:
+                        f.flush()
+                        logger.info(f"Saved number {index+1} out of {len(inputs)} chunks to DataFile")
+                    
+                    if (index + 1) % 1000 == 0:
+                        logger.debug(f"Processed {index+1} datasets")
 
         logger.info(f"Finished simulation of {num_datasets} datasets")
         logger.debug(f"Final dataset shape: {dset.shape}")

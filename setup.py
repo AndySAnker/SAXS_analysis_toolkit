@@ -1,14 +1,10 @@
-from setuptools import setup, find_packages
+"""
+Legacy setuptools entry point.
 
-# Read requirements from requirements.txt
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
+Packaging metadata is primarily defined in `pyproject.toml`. This file is kept
+for compatibility with tooling that still expects `setup.py`.
+"""
 
-setup(
-    name="saxs_analysis",
-    version="0.0.1",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
-    install_requires=requirements,
-    # Add other metadata like author, description, etc.
-)
+from setuptools import setup
+
+setup()

@@ -70,8 +70,11 @@ if __name__ == '__main__':
     # Save the model and class names
     logger.info("Saving model and class names...")
     model_save_path = ROOT_DIR / 'models' / 'classification' / config['model']['model_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])
+    model_save_path.parent.mkdir(parents=True, exist_ok=True)
     model.save_model(model_save_path)
-    np.save(ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation']), class_names)
+    class_names_path = ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path'].format(num_data_points=config['data']['num_data_points'], normalise_data=config['data']['normalise_data'], early_stopping_rounds=config['model']['early_stopping_rounds'], hyperparameter_optimisation=config['model']['hyperparameter_optimisation'])
+    class_names_path.parent.mkdir(parents=True, exist_ok=True)
+    np.save(class_names_path, class_names)
     logger.info(f"Model saved to {model_save_path}")
     logger.info(f"Class names saved to {ROOT_DIR / 'models' / 'classification' / config['model']['class_names_save_path']}")
 
