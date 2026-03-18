@@ -151,3 +151,26 @@ slurm/
 *_local*
 __pycache__
 scripts/experimental_SAS_analysis.py
+
+# Keep output directories visible in git
+!data/
+data/*
+!data/__init__.py
+!data/experimental/
+data/experimental/*
+!data/experimental/__init__.py
+!data/simulated/
+data/simulated/*
+!data/simulated/__init__.py
+
+!logs/
+logs/*
+!logs/__init__.py
+
+!plots/
+plots/*
+!plots/__init__.py
+
+!models/
+models/*
+!models/__init__.py
