@@ -1,6 +1,7 @@
-[COOL icons]
+[![License](https://img.shields.io/badge/license-Apache%20License%202.0-blue)](https://github.com/AndySAnker/SAXS_analysis/blob/main/LICENSE)
 
-[ABSTRACT]
+## Introduction
+SAXS_analysis is a Python toolkit for **simulating**, **fitting**, and **machine-learning–assisted interpretation** of small-angle X-ray scattering (SAXS) data. It can generate labeled synthetic datasets using sasmodels form factors, train classifiers/regressors to predict form factors and parameters, and run end-to-end analysis of experimental data (preprocessing → classification/regression → MCMC-based parameter inference).
 
 
 ## Getting Started
@@ -55,23 +56,12 @@ python scripts/see_version.py
 ## How to use SAXS_analysis
 
 In the scripts folder, we share examples of how to:
-- Simulated SAXS data
+- Simulate SAXS data
 - Fit SAXS data
-- Train a formfactor classification ML model
-- Train a regression model to estimate model parameters such as size, polydispersity, etc.
+- Train a form factor classification ML model
+- Train regression models to estimate model parameters (e.g. size, polydispersity, etc.)
+- Run MCMC-based inference
 - Analyse an experimental dataset using the above tools
-
-All scripts are driven by YAML config files in `configs/`, grouped by purpose:
-
-- `configs/simulation/`
-- `configs/training/`
-- `configs/analysis/`
-
-For example:
-
-```bash
-python scripts/train_formfactor_classifier.py --config configs/training/classification_config.yaml
-```
 
 ### Simulating data
 
@@ -114,7 +104,7 @@ python scripts/train_ann_regressor.py --config configs/training/forward_ann_conf
 python scripts/train_inverse_ann_regressor.py --config configs/training/inverse_ann_config.yaml
 ```
 
-The training scripts save models under `models/` and may also write scalers under `scalers/` and plots under `plots/`.
+The training scripts save models under `models/` and may also write scalers under `scalers/` and plots under `plots/` (a **scaler** stores the normalization used during training so you can convert between physical parameter values and the model’s scaled input/output space at inference time).
 
 **Changing which parameters the regressors learn**:
 
@@ -138,10 +128,6 @@ python scripts/experimental_SAS_analysis.py --config configs/analysis/experiment
 
 This pipeline expects the model/scaler paths in `configs/analysis/experimental_SAS_analysis.yaml` to point to existing files (i.e. trained models and saved scalers).
 
-## License
-
-This project is licensed under [...].
-
 ## Cite us!
 
 As an APA reference: ...
@@ -152,20 +138,6 @@ Or using `bibtex`:
 ...
 ```
 
-# Contributing to the software
+## Contributing & support
 
-We welcome contributions to our software! To contribute, please follow these steps:
-
-1. Fork the repository.
-2. Make your changes in a new branch.
-3. Submit a pull request.
-
-We'll review your changes and merge them if they meet our quality standards, including passing all unit tests. To ensure that your changes pass the unit tests, please run the tests locally before submitting your pull request. You can also view the test results on our GitHub repository using GitHub Actions.
-
-## Reporting issues
-
-If you encounter any issues or problems with our software, please report them by opening an issue on our GitHub repository. Please include as much detail as possible, including steps to reproduce the issue and any error messages you received.
-
-## Seeking support
-
-If you need help using our software, please reach out to us on our GitHub repository. We'll do our best to assist you and answer any questions you have.
+Issues, questions, and pull requests are welcome — please open a GitHub issue/PR with a short description, steps to reproduce (if relevant), and any error messages.
