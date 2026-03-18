@@ -35,7 +35,8 @@ def main():
         num_epochs = config['model']['num_epochs']
         learning_rate = config['model']['learning_rate']
         batch_size = config['model']['batch_size']
-        plot_dir = ROOT_DIR / "plots"
+        plot_dir = ROOT_DIR / "plots" / config["experiment_name"]
+        plot_dir.mkdir(parents=True, exist_ok=True)
 
         all_formfactors = []
         all_rmse_values = []
@@ -137,7 +138,7 @@ def main():
 
             # Plot training loss
             logger.info("Plotting training losses...")
-            plot_ann_loss(train_losses, val_losses, formfactor)
+            plot_ann_loss(train_losses, val_losses, formfactor, plot_dir=plot_dir)
 
             # Evaluate model
             logger.info("Plotting RMSE histograms...")

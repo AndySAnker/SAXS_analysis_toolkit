@@ -32,6 +32,8 @@ def main():
         file_path = ROOT_DIR / config['data']['file_name']
         formfactors = config['data'].get('formfactors', None)
         output_dir = ROOT_DIR / config['model']['model_save_path']
+        plot_dir = ROOT_DIR / "plots" / config["experiment_name"]
+        plot_dir.mkdir(parents=True, exist_ok=True)
         num_epochs = config['model']['num_epochs']
         learning_rate = config['model']['learning_rate']
         batch_size = config['model']['batch_size']
@@ -137,8 +139,8 @@ def main():
 
             # Evaluate model
             logger.info("Plotting results...")
-            plot_ann_loss(train_losses, val_losses, formfactor)
-            plot_prediction_error_histograms(model, test_loader, scaler, formfactor, ROOT_DIR)
+            plot_ann_loss(train_losses, val_losses, formfactor, plot_dir=plot_dir)
+            plot_prediction_error_histograms(model, test_loader, scaler, formfactor, plot_dir=plot_dir)
 
     except Exception as e:
         if logger:
