@@ -11,8 +11,16 @@ from sasmodels.data import empty_data1D
 from SAXS_analysis.utils.parameter_ranges import param_ranges
 from SAXS_analysis.data_processing.utils import normalize_intensity
 
-#Can I stop SasView trying to use my GPUs?
-#Yes. Create a system environment variable called SAS_OPENCL and give it the value ‘None’.
+"""Simulate one-dimensional SAS curves using sasmodels form factors and optional structure factors.
+
+Writes chunked HDF5 training data under ``ROOT_DIR`` with datasets ``SAXS_dataset``, ``q``,
+``formfactor``, ``parameters_formfactor``, and optionally structure factor / power-law fields.
+
+To disable OpenCL/GPU in SasView/sasmodels, set environment variable ``SAS_OPENCL=None``.
+"""
+
+# Can I stop SasView trying to use my GPUs?
+# Yes. Create a system environment variable called SAS_OPENCL and give it the value 'None'.
 # See more: https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/gpu_setup.html
 
 class SAS_Simulator:
@@ -31,29 +39,16 @@ class SAS_Simulator:
         A dictionary mapping form factor models to their parameters.
     param_ranges : dict
         A dictionary defining the ranges for each parameter.
-
-    Methods
-    -------
-    simulate_SAS(parameters)
-        Simulates SAS data using the model associated with this object.
-    assign_parameters_model()
-        Assigns random values to the parameters of the model associated with this object.
-    generate_parameters_and_simulate_SAS()
-        Generates parameters and simulates SAS for the model associated with this object.
     """
 
     def __init__(self, model_str='sphere', q=np.linspace(0.001, 1.5, 1000), resolution=np.random.uniform(0.0, 0.0)): 
         """
-        Initializes the object with a specified model and default values for other attributes.
+        Initialize the simulator with a form factor model and q grid.
 
-        The function sets the model string, creates a linspace for q values, sets a random resolution, 
-        loads the model, initializes an empty dictionary for model parameters, and sets parameter ranges.
-
-        Parameters:
-        model_str (str): The name of the form factor model. Defaults to 'sphere'.
-
-        Returns:
-        None
+        Args:
+            model_str: Form factor model name (default ``'sphere'``).
+            q: Scattering vector grid (1/Å).
+            resolution: Instrument resolution value passed to sasmodels data.
         """
 
         self.model_str = model_str
@@ -71,21 +66,18 @@ class SAS_Simulator:
         
     def simulate_SAS(self, parameters, add_noise=True, normalization_type='peak'):
         """
-        Simulates Small Angle Scattering (SAS) data using the form factor model associated with this object.
+        Simulate SAS intensity using the loaded sasmodels form factor.
 
-        The function first creates an empty 1D data set with the q values and resolution stored in the object. 
-        It then creates a DirectModel with this data and the model stored in the object. The model is calculated 
-        with the specified parameters, and the resulting SAS data is normalized. If add_noise is True, Poisson noise 
-        is added to the SAS data.
+        Builds a 1D ``DirectModel``, evaluates ``I(q)``, optionally adds Poisson noise,
+        then normalizes.
 
-        Parameters:
-        parameters (dict): The parameters to use when calculating the model.
-        add_noise (bool): Whether to add Poisson noise to the SAS data.
-        normalization_type (str): The type of normalization to apply. 
-                                  Options are 'None' or 'peak'. Default is 'peak'.
+        Args:
+            parameters: Model parameters for sasmodels.
+            add_noise: If True, apply Poisson noise to intensities.
+            normalization_type: ``'peak'`` or ``'none'`` (see ``normalize_intensity``).
 
         Returns:
-        numpy.ndarray: The normalized simulated SAS data, with added Poisson noise if add_noise is True.
+            Tuple ``(Iq, dIq)`` after normalization.
         """
 
         # Create an empty 1D data set with the specified q values and resolution
@@ -115,16 +107,10 @@ class SAS_Simulator:
 
     def assign_parameters_model(self):
         """
-        Assigns random values to the parameters of the form factor model associated with this object.
-
-        The function iterates over the parameters of the model, which are stored in `self.model_parameters`. 
-        For each parameter, it assigns a random value within the range specified in `self.param_ranges`.
+        Assign random values for each model parameter using ``param_ranges``.
 
         Returns:
-        dict: A dictionary where the keys are the parameter names and the values are the randomly assigned values.
-
-        Raises:
-        Warning: If a parameter is not found in `self.param_ranges`, a warning message is printed.
+            Parameter name to value mapping for the current ``model_str``.
         """
 
         # Assign parameters to the model
@@ -143,15 +129,10 @@ class SAS_Simulator:
 
     def generate_parameters_and_simulate_SAS(self, add_noise=True, normalization_type='peak'):
         """
-        Generates parameters and simulates Small Angle Scattering (SAS) for a given model.
-
-        The model is determined by the current state of the object. The function first calls 
-        the `assign_parameters_model` method to generate the parameters for the model, and then 
-        simulates the SAS data using these parameters by calling the `simulate_SAS` method.
+        Sample parameters, simulate intensities, and return q, ``I(q)``, uncertainty, and parameters.
 
         Returns:
-        tuple: A tuple containing two numpy.ndarrays. The first array represents the q values, 
-        and the second array represents the simulated SAS data.
+            Tuple ``(q, Iq, dIq, parameters)``.
         """
 
         # Generate parameters for the form factor model
@@ -180,6 +161,27 @@ def simulate_sas_datasets(
     use_multiprocessing=True,
     logger=None
 ):
+    """Generate many labeled curves and append them to a single HDF5 file.
+
+    Enumerates combinations of form factor / optional structure factor / optional power law,
+    then for each combination draws ``num_datasets`` samples. Uses multiprocessing (spawn) by
+    default to avoid HDF5 fork issues. Performs a parent-process sasmodels warmup to reduce
+    races on kernel compilation.
+
+    Args:
+        num_datasets: Curves per (form factor, structure, powerlaw) combination.
+        output_dir: Folder under ``ROOT_DIR`` for the HDF5 file.
+        filename: HDF5 filename.
+        dtype: Storage dtype for intensities.
+        structurefactor_include_chance, powerlaw_include_chance: Probabilities in ``[0, 1]``.
+        chunk_size: HDF5 chunk and flush cadence ``(rows, q_points)``.
+        form_factors, structure_factors, powerlaws: sasmodels names to combine.
+        q_range: ``(q_min, q_max, n_points)`` in 1/Å.
+        resolution_range: Uniform range for smearing draws.
+        normalization_type, add_noise: Passed to :class:`SAS_Simulator`.
+        use_multiprocessing: If False, run ``simulate_single`` in-process.
+        logger: Logger with ``info`` / ``debug`` methods.
+    """
     logger.info(f"Starting simulation of {num_datasets} datasets")
     logger.debug(f"Output directory: {output_dir}, Filename: {filename}")
     logger.debug(f"Chunk size: {chunk_size}, Data type: {dtype}")
@@ -308,6 +310,10 @@ def simulate_sas_datasets(
         logger.debug(f"Final dataset shape: {dset.shape}")
 
 def simulate_single(input_tuple):
+    """Simulate one curve: form factor plus optional structure and power-law contributions.
+
+    Scales contributions with a random Dirichlet vector so the sum of weights is 1.
+    """
     formfactor_model, structurefactor_model, powerlaw_model, i, q, resolution_range, normalization_type, add_noise = input_tuple
     resolution = np.random.uniform(resolution_range[0], resolution_range[1])
 

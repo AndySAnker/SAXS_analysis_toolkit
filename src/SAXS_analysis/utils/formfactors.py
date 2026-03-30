@@ -15,6 +15,9 @@ Two main lists are created:
 2. formfactors: A copy of formfactors_original, which can be modified without affecting the original list
 
 These lists can be imported and used in other parts of the SAXS simulation and analysis pipeline.
+
+``formfactor_params`` maps each **supported** form factor name to the list of sasmodels parameter
+names used for simulation bounds and ML regression targets (subset of full model parameters).
 """
 
 # List of all interesting models from: https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/models/index.html

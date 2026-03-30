@@ -18,7 +18,8 @@ data:
     cylinder: models/regression/ann_inverse/cylinder_inverse.pth
 
 row_index : 2501
-nwalkers: 25 
+# Markov Chain Monte Carlo (MCMC) sampling
+nwalkers: 25
 burn_in: 1234
 niter: 5678
 

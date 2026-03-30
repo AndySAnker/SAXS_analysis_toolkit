@@ -1,3 +1,5 @@
+"""Load, filter, and transform SAS curves for ML and fitting."""
+
 import h5py
 import numpy as np
 import sasmodels.data
@@ -11,8 +13,20 @@ from scipy.interpolate import interp1d
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
-    """
-    Load data from an HDF5 file, shuffle it, and prepare data for ML purposes.
+    """Load simulated SAXS HDF5 data and stack q with intensities for training.
+
+    Reads ``SAXS_dataset``, ``formfactor``, and optional ``q``. Rows are shuffled.
+    Intensities may be quotient-normalized (length ``len(q)-1``); q is trimmed to match.
+
+    Args:
+        filename: Path relative to ``ROOT_DIR`` to an HDF5 file.
+        num_files: Max number of curves to return (default: all).
+        qmin, qmax: Fallback q range if the file has no ``q`` dataset.
+
+    Returns:
+        ``(Datafiles, y_labels)`` where ``Datafiles`` has shape
+        ``(n, 2, n_q)`` — channel 0 is q, channel 1 is intensity — and ``y_labels``
+        are decoded form factor names per row.
     """
     with h5py.File(ROOT_DIR / filename, 'r') as f:
         X = f['SAXS_dataset'][()]
@@ -55,7 +69,15 @@ def load_hdf5_data(filename, num_files=None, qmin=None, qmax=None):
 
 # --- Functions ---
 def load_and_process_SAS_data(data_source, qmin=None, qmax=None):
-    """Load SAS data and filter by qmin/qmax and positive I(q)."""
+    """Load columns ``q``, ``I(q)``, optional ``sigma`` from a whitespace-separated text file.
+
+    Args:
+        data_source: Path relative to ``ROOT_DIR``.
+        qmin, qmax: Clip range; defaults to data extent.
+
+    Returns:
+        ``(q, I, sigma)`` with positive-intensity points only.
+    """
     data = np.loadtxt(ROOT_DIR / data_source, dtype=float)
     q_raw, Iq_raw = data[:,0], data[:,1]
     std_raw = np.abs(data[:,2]) if data.shape[1] > 2 else np.zeros_like(Iq_raw)
@@ -69,7 +91,10 @@ def load_and_process_SAS_data(data_source, qmin=None, qmax=None):
     return q_raw[mask], Iq_raw[mask], std_raw[mask]
 
 def adaptive_downsample(q, Iq, std, q_split=1, n_low=1, n_high=20):
-    """Downsample SAXS data adaptively in low/high q regions."""
+    """Reduce points below ``q_split`` every ``n_low`` steps and above every ``n_high`` steps.
+
+    Keeps more detail at low q by default when ``n_low < n_high``. Result is sorted by q.
+    """
     low_mask = q < q_split
     high_mask = q >= q_split
     q_ds = np.concatenate([q[low_mask][::n_low], q[high_mask][::n_high]])
@@ -80,14 +105,14 @@ def adaptive_downsample(q, Iq, std, q_split=1, n_low=1, n_high=20):
     return q_ds[sort_idx], Iq_ds[sort_idx], std_ds[sort_idx]
 
 def interpolate_to_n_points(q, Iq, std, num_points):
-    """Linearly interpolate data to a fixed number of points."""
+    """Linearly interpolate ``I`` and ``sigma`` onto ``num_points`` evenly spaced in q."""
     q_interp = np.linspace(q.min(), q.max(), num_points)
     Iq_interp = np.interp(q_interp, q, Iq)
     std_interp = np.interp(q_interp, q, std)
     return q_interp, Iq_interp, std_interp
 
 def quotient_transform(Iq, std):
-    """Compute quotient transform and propagate error."""
+    """Compute ``2 * log(I(q_i)/I(q_{i-1}))`` and first-order error propagation on ``std``."""
     ratio = Iq[1:] / Iq[:-1]
     qt = 2 * np.log(ratio)
     qt_std = 2 * np.sqrt((std[1:]/Iq[1:])**2 + (std[:-1]/Iq[:-1])**2)
@@ -96,14 +121,13 @@ def quotient_transform(Iq, std):
 def normalize_intensity(intensity, normalization_type='peak'):
     """
     Normalize the scattering intensity based on the specified type.
-    
-    Parameters:
-    intensity (numpy.ndarray): The scattering intensity to normalize.
-    normalization_type (str): The type of normalization to apply. 
-                              Options are 'None', 'peak' or 'quotient'. Default is 'peak'.
-    
+
+    Args:
+        intensity: Scattering intensity array.
+        normalization_type: ``'none'``, ``'peak'``, or ``'quotient'``.
+
     Returns:
-    numpy.ndarray: The normalized intensity.
+        Normalized intensity (or log-ratio for ``quotient``).
     """
     if normalization_type.lower() == 'none':
         return intensity
@@ -118,16 +142,15 @@ def apply_error_weighting(data, error_weighting='sqrt'):
     """
     Apply error weighting to the data.
 
-    Parameters:
-    data (numpy.ndarray): The input data array. It should have at least 2 columns: q and intensity.
-    error_weighting (str): The type of error weighting to apply. 
-                           Options are 'None', 'intensity', 'sqrt', or 'absolute'. Default is 'sqrt'.
+    Args:
+        data: Array with at least two columns (q and intensity).
+        error_weighting: ``'None'``, ``'intensity'``, ``'sqrt'``, or ``'absolute'``.
 
     Returns:
-    numpy.ndarray: The error weights for the data.
+        Per-point error weights.
 
     Raises:
-    ValueError: If an invalid error_weighting option is provided.
+        ValueError: If ``error_weighting`` is not recognized.
     """
     if error_weighting == 'None':
         return np.ones(len(data)) * 1e-9  # Impossible to predict noise when not reported in data file
@@ -200,16 +223,16 @@ def load_and_preprocess_data(file_name: str, num_data_points: int = int(9e15),
     return X, y
 
 def split_data(X: np.ndarray, y: np.ndarray, normalize: bool = False) -> tuple:
-    """
-    Common data splitting and normalization functionality.
-    
+    """Split ``X, y`` into train / validation / test (60/20/20) with fixed random seed.
+
     Args:
-        X: Feature matrix
-        y: Target values
-        normalize: Whether to normalize features
-    
+        X: Feature matrix (e.g. intensities or q–I stacks).
+        y: Targets (class indices or parameter vectors).
+        normalize: If True, apply ``StandardScaler`` to X (fit on train only) and save
+            ``scalers/classification_standard_scaler.joblib``.
+
     Returns:
-        tuple: (dtrain, dval, dtest) or (dtrain, dval, dtest, class_names)
+        ``X_train, X_val, X_test, y_train, y_val, y_test``.
     """
     # Split into train/test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)

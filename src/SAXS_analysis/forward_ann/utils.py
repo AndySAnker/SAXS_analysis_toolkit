@@ -1,3 +1,5 @@
+"""Training utilities for forward ANNs (parameters → curve features)."""
+
 import os
 import torch
 import numpy as np
@@ -50,6 +52,7 @@ def process_data_regression(file_name: str, formfactor: str, num_data_points: in
     return (X_train_tensor, y_train_tensor), (X_val_tensor, y_val_tensor), (X_test_tensor, y_test_tensor), y_scaler
 
 def lr_scheduler(optimizer, config_model):
+    """Optional ``ReduceLROnPlateau`` from training YAML ``reduce_lr_on_plateau`` block."""
     reduce_lr_cfg = config_model.get('reduce_lr_on_plateau', {})
     reduce_lr_enabled = reduce_lr_cfg.get('enabled', False)
 
@@ -67,6 +70,7 @@ def lr_scheduler(optimizer, config_model):
     return scheduler
 
 def calculate_test_mae(model, test_loader, scaler, formfactor):
+    """Print per-parameter MAE on the test loader after inverse-scaling predictions."""
     model.eval()
     all_preds = []
     all_targets = []

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "saxs_analysis"
 version = "0.0.1"
-description = "A package for simulation, fitting and machine learning analysis of Small-Angle X-ray Scattering (SAXS) data"
+description = "Python toolkit for simulating, fitting, and interpreting SAXS data with sasmodels, Machine learning models, and Markov Chain Monte Carlo—including an experimental pipeline from preprocessing to inference."
 authors = [{name = "Andy Sode Anker", email = "ansoan@dtu.dk"}]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,3 +19,12 @@ where = ["src"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7",
+    "myst-parser>=3",
+    "docxbuilder>=1.2",
+    "numpy",
+    "scipy",
+]

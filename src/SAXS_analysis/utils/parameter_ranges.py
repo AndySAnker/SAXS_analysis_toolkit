@@ -10,7 +10,9 @@ length, thickness, scattering length densities (SLD), and various distribution
 characteristics for different geometric shapes and structures.
 
 Each parameter is assigned either a random value within a specified range
-or a choice from predefined options.
+or a choice from predefined options. The global ``param_ranges`` dict is the single
+source of sampling bounds for simulation and many ML pipelines; keep keys aligned with
+``formfactor_params`` in :mod:`~SAXS_analysis.utils.formfactors`.
 
 Note: Ensure that 'random' and 'numpy' are imported at the beginning of this file.
 """

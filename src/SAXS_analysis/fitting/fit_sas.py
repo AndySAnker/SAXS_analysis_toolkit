@@ -9,47 +9,49 @@ from SAXS_analysis.utils.parameter_ranges import param_ranges
 from SAXS_analysis.utils.size_distribution_models import size_distribution_models
 from SAXS_analysis.data_processing.utils import load_and_process_SAS_data
 import SAXS_analysis
+
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
+
 class SAS_Fitter:
-    """
-    A class used to fit Small Angle Scattering (SAS) data using various form factor models and solvers.
+    """Bumps/sasmodels fitting with optional ML-provided starting points (see script attributes).
 
-    Attributes
-    ----------
-    DataName : str
-        The name of the data file to be loaded.
-    MLName : str
-        The name of the machine learning model to be used for prediction.
-    ML_formfactorModel : bool
-        If True, the machine learning model will be used to predict the form factors.
-    ML_parameterModel : bool
-        If True, the machine learning model will be used to predict the parameters as initial values for the fit.
-    class_names : numpy.ndarray
-        An array containing the names of the classes for the machine learning model.
-    param_ranges : dict
-        A dictionary containing the ranges for the parameters of the form factor models.
+    ``param_ranges`` and polydispersity types come from :mod:`~SAXS_analysis.utils.parameter_ranges`
+    and :mod:`~SAXS_analysis.utils.size_distribution_models`. Set ``ML_formfactorModel`` /
+    ``ML_parameterModel`` on the instance when using trained XGBoost helpers from the package scripts.
 
-    Methods
-    -------
-    load_data(Datafile, qmin, qmax):
-        Loads the SAS data from a file or a numpy array, normalizes it, and filters it based on the provided qmin and qmax values.
-    predict_formfactor():
-        Uses a pre-trained XGBoost model to predict the form factor for the given data.
-    predict_parameters(formfactor):
-        Uses a pre-trained XGBoost model to predict the parameters for a given form factor.
-    fit_sas_data(formfactor, solver, smearing):
-        Fits the SAS data using a specified form factor model and solver.
+    Args:
+        data_name: Optional HDF5 or dataset identifier (``scripts/fit_sas.py`` passes this; only stored).
     """
 
-    def __init__(self):
+    def __init__(self, data_name=None):
+        self.data_name = data_name
         self.radius_pd_type = size_distribution_models
         self.param_ranges = param_ranges
-        pass
 
-    def load_data(self, data_source=None, qmin=None, qmax=None, error_weighting=None, normalization_type='None', x=None, y=None, z=None):
+    def load_data(
+        self,
+        data_source=None,
+        qmin=None,
+        qmax=None,
+        error_weighting=None,
+        normalization_type="None",
+        x=None,
+        y=None,
+        z=None,
+    ):
+        """Load 1D SAS data via :func:`~SAXS_analysis.data_processing.utils.load_and_process_SAS_data`.
+
+        ``data_source`` should be a path to a text file with ``q``, ``I``, optional ``sigma`` columns
+        (see that function). Extra ``x,y,z`` kwargs are accepted for API compatibility but are not
+        forwarded by the current loader implementation.
+        """
         self.error_weighting = error_weighting
-        self.data = load_and_process_SAS_data(data_source=data_source, x=x, y=y, z=z, qmin=qmin, qmax=qmax, error_weighting=error_weighting, normalization_type=normalization_type)
+        self.data = load_and_process_SAS_data(
+            data_source=data_source,
+            qmin=qmin,
+            qmax=qmax,
+        )
 
     def fit_sas_data(self, formfactor, solver, smearing, model_parameters_fit=None):
         """
@@ -136,6 +138,7 @@ class SAS_Fitter:
         return I_calc, goodness_of_fit, R_w, fitted_params
 
     def make_problem(self, kernel, model_parameters, model_parameters_fit, smearing=0.0):
+        """Build a :class:`bumps.fitproblem.FitProblem` with optional slit smearing."""
         model = Model(model=kernel, **model_parameters, **model_parameters_fit)
         
         # Fit the data

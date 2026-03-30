@@ -2,6 +2,8 @@
 
 # https://github.com/njszym/XRD-AutoAnalyzer
 
+"""XGBoost training and inference for form-factor classification."""
+
 import numpy as np
 import xgboost as xgb
 from sklearn.metrics import accuracy_score
@@ -12,6 +14,7 @@ import SAXS_analysis
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, learning_rate, early_stopping_rounds):
+    """Objective for Bayesian hyperparameter search: negative validation log-loss."""
     params = {
         'max_depth': int(max_depth),
         'gamma': gamma, 
@@ -37,6 +40,7 @@ def bo_tune_xgb(X_train, y_train, X_val, y_val, max_depth, gamma, n_estimators, 
     return -log_loss(y_val, y_val_pred)
 
 def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_results=True, save_basename=''):
+    """Compute train/val/test accuracy and optionally plot confusion matrix and log-loss curves."""
     # Retrieve performance metrics
     train_loss = evals_result['train']['mlogloss']
     val_loss = evals_result['eval']['mlogloss']
@@ -70,6 +74,7 @@ def evaluate_model(model, evals_result, dtrain, dval, dtest, class_names, plot_r
     return train_accuracy, val_accuracy, test_accuracy, baseline_accuracy
 
 def train_model(dtrain, dval, early_stopping_rounds=25, hyperparameter_optimisation=False, use_gpu=False):
+    """Train XGBoost multi-class classifier with ``multi:softprob``; optional ``bayes_opt`` search."""
     device = 'cuda' if use_gpu else 'cpu'
     tree_method = 'hist'
 
@@ -113,10 +118,7 @@ def train_model(dtrain, dval, early_stopping_rounds=25, hyperparameter_optimisat
     return model, evals_result
 
 def classify_formfactor(saxs_profile, model_path, class_names_path):
-    """
-    This function takes a 1D saxs_profile and uses the classification model to output the top class
-
-    """
+    """Return the single highest-probability class name for a 1D intensity profile."""
     # Load classification model
     model = xgb.Booster()
     model.load_model(str(model_path))
@@ -132,34 +134,21 @@ def classify_formfactor(saxs_profile, model_path, class_names_path):
 
 def predict_formfactor(data, MLName, class_names):
     """
-    Predicts the form factor for given SAXS data using a pre-trained XGBoost model.
+    Predict the form factor for SAXS data using a pre-trained XGBoost model.
 
-    This function loads a pre-trained XGBoost model from a file, uses it to predict
-    the form factor for the input SAXS data, and returns the names of the top 3
-    predicted classes.
+    Loads the model, scores the intensity column, and returns the top three class names.
 
-    Parameters:
-    data (numpy.ndarray): A 2D array containing the SAXS data. The second column
-                          (index 1) is used for prediction.
-    MLName (str): The file path of the pre-trained XGBoost model.
-    class_names (numpy.ndarray): A 1D array containing the names of all possible
-                                 form factor classes.
+    Args:
+        data: 2D array; column index 1 (intensity) is used for prediction.
+        MLName: Path to the trained XGBoost model file (relative to the package root).
+        class_names: 1D array of class label strings.
 
     Returns:
-    numpy.ndarray: A 1D array containing the names of the top 3 predicted classes,
-                   sorted by probability in descending order.
+        Top three class names by predicted probability (descending).
 
     Raises:
-    FileNotFoundError: If the model file specified by MLName is not found.
-    xgboost.core.XGBoostError: If there's an error in loading or using the XGBoost model.
-
-    Example usage:
-    >>> data = np.array([[q1, I1], [q2, I2], ..., [qn, In]])
-    >>> MLName = 'path/to/XGBoost_model.json'
-    >>> class_names = np.array(['sphere', 'cylinder', 'ellipsoid', ...])
-    >>> top3_preds = predict_formfactor(data, MLName, class_names)
-    >>> print(top3_preds)
-    ['sphere' 'cylinder' 'ellipsoid']
+        FileNotFoundError: If the model file is missing.
+        xgboost.core.XGBoostError: On XGBoost load or prediction errors.
     """
     # Load the model from a file
     model = xgb.Booster()

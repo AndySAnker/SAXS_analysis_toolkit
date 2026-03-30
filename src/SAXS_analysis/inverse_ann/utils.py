@@ -1,3 +1,5 @@
+"""Training utilities for inverse ANNs (curve features → parameters)."""
+
 import torch
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -51,6 +53,7 @@ def process_data_regression_inverse(file_name: str, formfactor: str, num_data_po
     return (X_train_tensor, y_train_tensor), (X_val_tensor, y_val_tensor), (X_test_tensor, y_test_tensor), x_scaler
 
 def lr_scheduler(optimizer, config_model):
+    """Optional ``ReduceLROnPlateau`` from training YAML ``reduce_lr_on_plateau`` block."""
     reduce_lr_cfg = config_model.get('reduce_lr_on_plateau', {})
     reduce_lr_enabled = reduce_lr_cfg.get('enabled', False)
 
@@ -68,6 +71,7 @@ def lr_scheduler(optimizer, config_model):
     return scheduler
 
 def calculate_rmse(model, test_loader):
+    """RMSE per sample (axis 1) between predictions and targets on the test loader."""
     model.eval()
     all_preds = []
     all_targets = []

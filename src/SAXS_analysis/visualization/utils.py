@@ -1,3 +1,5 @@
+"""Plotting helpers for training diagnostics and experimental-pipeline figures."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -13,6 +15,7 @@ import joblib
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
 def plot_random_data(X, y, num_plots=3, save_path='random_data.png'):
+    """Debug plot random training curves vs form factor labels (log–log)."""
     plot_dir = Path(ROOT_DIR) / "plots"
     plot_dir.mkdir(parents=True, exist_ok=True)
     (plot_dir / Path(save_path)).parent.mkdir(parents=True, exist_ok=True)
@@ -40,6 +43,7 @@ def plot_random_data(X, y, num_plots=3, save_path='random_data.png'):
         plt.close()
 
 def plot_log_loss(train_loss, val_loss, save_path='log_loss.png'):
+    """Plot training vs validation log loss for XGBoost classification training."""
     plot_dir = Path(ROOT_DIR) / "plots"
     plot_dir.mkdir(parents=True, exist_ok=True)
     (plot_dir / Path(save_path)).parent.mkdir(parents=True, exist_ok=True)
@@ -59,6 +63,7 @@ def plot_log_loss(train_loss, val_loss, save_path='log_loss.png'):
     plt.close()
 
 def plot_confusion_matrix(y_true, y_pred, class_names, save_path='confusion_matrix.png'):
+    """Heatmap of true vs predicted class indices."""
     plot_dir = Path(ROOT_DIR) / "plots"
     plot_dir.mkdir(parents=True, exist_ok=True)
     (plot_dir / Path(save_path)).parent.mkdir(parents=True, exist_ok=True)
@@ -77,6 +82,7 @@ def plot_confusion_matrix(y_true, y_pred, class_names, save_path='confusion_matr
     plt.close()
 
 def plot_ann_loss(train_losses, val_losses, formfactor, plot_dir=None):
+    """Save train/validation loss curves for PyTorch ANN training."""
     plot_dir = Path(plot_dir) if plot_dir is not None else (Path(ROOT_DIR) / "plots")
     plot_dir.mkdir(parents=True, exist_ok=True)
 
@@ -92,6 +98,7 @@ def plot_ann_loss(train_losses, val_losses, formfactor, plot_dir=None):
     plt.close()
 
 def plot_prediction_error_histograms(model, test_loader, scaler, formfactor, root_dir=None, plot_dir=None):
+    """Per-parameter histograms of (prediction − truth) after inverse scaling."""
     model.eval()
     y_pred_list = []
     y_true_list = []
@@ -143,6 +150,7 @@ def plot_prediction_error_histograms(model, test_loader, scaler, formfactor, roo
     print(f"Error histograms saved to {plot_dir}")
 
 def plot_rmse_histograms(formfactors, rmse_values, save_dir=None):
+    """Histogram RMSE values per form factor (expects parallel lists)."""
     if save_dir is not None:
         os.makedirs(save_dir, exist_ok=True)
 
@@ -170,17 +178,16 @@ def plot_rmse_histograms(formfactors, rmse_values, save_dir=None):
 
 def save_corner_plot(flat_chain, map_estimate, row_index=None, true_input=None,
                      scaler_path=None, save_dir="plots", parameter_names=None):
-    """
-    Generate and save a corner plot of MCMC samples using unscaled values.
+    """Corner plot of MCMC samples in physical units (inverse-scaled via ``scaler_path``).
 
-    Parameters:
-    - flat_chain: Flattened MCMC chain of sampled parameters (scaled)
-    - map_estimate: MAP estimate (scaled)
-    - row_index: Optional row index for filename
-    - true_input: True parameter values (unscaled)
-    - scaler_path: Path to scaler for inverse-transforming MCMC samples and MAP
-    - save_dir: Directory to save the plot
-    - parameter_names: Optional list of parameter names for axis labels
+    Args:
+        flat_chain: ``(n_samples, n_dim)`` in scaled space.
+        map_estimate: MAP point in scaled space.
+        row_index: Optional suffix for the output filename.
+        true_input: Optional ground-truth parameters (physical units) for vertical lines.
+        scaler_path: Joblib ``MinMaxScaler`` fitted on parameters.
+        save_dir: Output directory.
+        parameter_names: Axis labels; defaults to ``Param 0..``.
     """
 
     os.makedirs(save_dir, exist_ok=True)

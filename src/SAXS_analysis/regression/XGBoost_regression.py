@@ -2,6 +2,8 @@
 
 # https://github.com/njszym/XRD-AutoAnalyzer
 
+"""XGBoost regression of sasmodels parameters from simulated SAXS curves."""
+
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,6 +18,7 @@ ROOT_DIR = SAXS_analysis.ROOT_DIR
 import os
 
 def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate, early_stopping_rounds):
+    """Bayesian optimisation objective (uses global ``X_train``/``y_train`` from training script)."""
     params = {'max_depth': int(max_depth),
               'gamma': gamma, 
               'n_estimators': int(n_estimators),
@@ -29,6 +32,7 @@ def bo_tune_xgb(max_depth, gamma, n_estimators ,learning_rate, early_stopping_ro
     return -log_loss(y_val, y_val_pred)
 
 def process_data(file_name, formfactor, num_data_points=9e15):
+    """Load HDF5 simulation data for one ``formfactor`` and build train/val/test ``DMatrix`` objects."""
     f = h5py.File(ROOT_DIR / file_name, 'r')
     X = f['SAXS_dataset'][()]
     y = f['parameters_formfactor'][()][:len(X)]
@@ -77,6 +81,7 @@ def process_data(file_name, formfactor, num_data_points=9e15):
     return dtrain, dval, dtest
 
 def evaluate_model(model, evals_result, dtrain, dval, dtest, formfactor, plot_results=True, save_dir=None, show_plots=False):
+    """Print per-parameter MAE/MSE/R² on train/val/test and optional RMSE curve plot."""
     # Retrieve performance metrics
     results = evals_result
     epochs = len(results['train']['rmse'])
@@ -138,6 +143,7 @@ def evaluate_model(model, evals_result, dtrain, dval, dtest, formfactor, plot_re
     return None
 
 def train_model(dtrain, dval, early_stopping_rounds=25, hyperparameter_optimisation=False, use_gpu=False):
+    """Train XGBoost regressor with ``reg:squarederror`` (default objective); optional Bayesian hyperopt."""
     device = 'cuda' if use_gpu else 'cpu'
     tree_method = 'hist'
 
@@ -182,38 +188,24 @@ def train_model(dtrain, dval, early_stopping_rounds=25, hyperparameter_optimisat
 
 def predict_parameters(data, MLName, formfactor, param_ranges):
     """
-    Predicts parameters for a given form factor using a pre-trained XGBoost model and updates param_ranges.
+    Predict parameters for a form factor and update ``param_ranges`` in place.
 
-    This function loads a pre-trained XGBoost model specific to the given form factor,
-    uses it to predict parameters based on the input SAXS data, and updates the
-    param_ranges dictionary with the predicted values if they fall within the
-    specified range.
+    Loads the per-form-factor XGBoost model, predicts from the intensity column,
+    and writes mid-range predictions into ``param_ranges`` where applicable.
 
-    Parameters:
-    data (numpy.ndarray): A 2D array containing the SAXS data. The second column
-                          (index 1) is used for prediction.
-    MLName (str): The name or identifier of the machine learning model.
-    formfactor (str): The form factor for which parameters are to be predicted.
-                      This should be one of the keys in the `formfactor_params` dictionary.
-    param_ranges (dict): A dictionary containing the current parameter ranges.
-                         This dictionary will be modified in-place with predicted values.
+    Args:
+        data: 2D SAXS array; column 1 is intensity.
+        MLName: Model name suffix used in the on-disk filename.
+        formfactor: Form factor key (must exist in ``formfactor_params``).
+        param_ranges: Bounds and placeholders; updated in place.
 
     Returns:
-    None: The function modifies the `param_ranges` dictionary in-place.
+        ``None`` (mutates ``param_ranges``).
 
     Raises:
-    KeyError: If the provided form factor is not found in the `formfactor_params` dictionary.
-    FileNotFoundError: If the model file for the given form factor and ML name is not found.
-    xgboost.core.XGBoostError: If there's an error in loading or using the XGBoost model.
-
-    Example usage:
-    >>> data = np.array([[q1, I1], [q2, I2], ..., [qn, In]])
-    >>> MLName = 'regression_model'
-    >>> formfactor = 'sphere'
-    >>> param_ranges = {'radius': [None, 1, 100], 'sld': [None, 1e-6, 1e-5], ...}
-    >>> predict_parameters(data, MLName, formfactor, param_ranges)
-    >>> print(param_ranges)
-    {'radius': [50.3, 1, 100], 'sld': [3.2e-6, 1e-6, 1e-5], ...}
+        KeyError: Unknown ``formfactor``.
+        FileNotFoundError: Missing model JSON.
+        xgboost.core.XGBoostError: On XGBoost load or prediction errors.
     """
     
     # Load the model from a file

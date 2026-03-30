@@ -46,9 +46,9 @@ scalers:
     ellipsoid: "scalers/ellipsoid_inverse_scaler.joblib"
     cylinder: "scalers/cylinder_inverse_scaler.joblib"
 
-# MCMC parameters    
-mcmc: 
-  nwalkers: 25 # number of walkers for the MCMC sampling 
+# Markov Chain Monte Carlo (MCMC) parameters
+mcmc:
+  nwalkers: 25 # number of walkers for MCMC sampling
   burn_in: 5678 # number of burn-in steps
   niter: 1234 # number of MCMC sampling steps
 

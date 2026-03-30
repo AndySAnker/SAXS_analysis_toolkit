@@ -1,8 +1,14 @@
 [![License](https://img.shields.io/badge/license-Apache%20License%202.0-blue)](https://github.com/AndySAnker/SAXS_analysis/blob/main/LICENSE)
 
-## Introduction
-SAXS_analysis is a Python toolkit for **simulating**, **fitting**, and **machine-learning–assisted interpretation** of small-angle X-ray scattering (SAXS) data. It can generate labeled synthetic datasets using sasmodels form factors, train classifiers/regressors to predict form factors and parameters, and run end-to-end analysis of experimental data (preprocessing → classification/regression → MCMC-based parameter inference).
+# SAXS Analysis Toolkit
 
+## Introduction
+
+**SAXS Analysis Toolkit** is a Python package for **simulating**, **fitting**, and **interpreting** small-angle X-ray scattering (SAXS) data with sasmodels, Machine learning models, and Markov Chain Monte Carlo—including an experimental pipeline from preprocessing to inference. It can generate labeled synthetic datasets using sasmodels form factors, train classifiers/regressors to predict form factors and parameters, and run end-to-end analysis of experimental data (preprocessing → classification/regression → MCMC-based parameter inference).
+
+### Small-angle neutron scattering (SANS)
+
+Simulation and sasmodels-based fitting treat **generic small-angle scattering**: the same form factors and `I(q)` models apply to **SANS** (neutrons) as to SAXS. Loading and preprocessing experimental data only requires **q**, **I(q)**, and optional uncertainties—**not** an X-ray-specific format. **Pretrained machine-learning models** (classification, regression, ANNs) reflect whatever was used for training; for SANS workflows you should **retrain or carefully validate** them on neutron-appropriate simulations or labeled data, because contrast, background, and noise can differ from typical SAXS. Keep **q units** (e.g. Å⁻¹ vs nm⁻¹) **consistent** between your data, configs, and trained models.
 
 ## Getting Started
 
@@ -56,14 +62,14 @@ python scripts/see_version.py
 │       ├── visualization
 ```
 
-## How to use SAXS_analysis
+## How to use the SAXS Analysis Toolkit
 
-In the scripts folder, we share examples of how to:
+In the `scripts/` folder, we share examples of how to:
 - Simulate SAXS data
 - Fit SAXS data
 - Train a form factor classification ML model
 - Train regression models to estimate model parameters (e.g. size, polydispersity, etc.)
-- Run MCMC-based inference
+- Run Markov Chain Monte Carlo (MCMC)–based inference
 - Analyse an experimental dataset using the above tools
 
 ### Simulating data
@@ -123,13 +129,27 @@ There are two main analysis entry points:
 python scripts/fit_sas.py --config configs/analysis/fit_config.yaml
 ```
 
-2) **Experimental data analysis** (preprocess → classify → regress → MCMC inference):
+2) **Experimental data analysis** (preprocess → classify → regress → MCMC parameter inference):
 
 ```bash
 python scripts/experimental_SAS_analysis.py --config configs/analysis/experimental_SAS_analysis.yaml
 ```
 
 This pipeline expects the model/scaler paths in `configs/analysis/experimental_SAS_analysis.yaml` to point to existing files (i.e. trained models and saved scalers).
+
+## Documentation (Sphinx)
+
+Optional dependencies add [Sphinx](https://www.sphinx-doc.org/), [MyST](https://myst-parser.readthedocs.io/) (Markdown), and [docxbuilder](https://docxbuilder.readthedocs.io/). **HTML** builds a small site: this README as the user guide, an auto-generated **Python API** (all `SAXS_analysis` submodules via Sphinx autodoc), and a **configuration files** overview. **Word** output is the user guide only (README), not the full API. Re-run `sphinx-build` after changing docstrings in `src/SAXS_analysis/` to refresh the API pages.
+
+```bash
+python -m pip install -e ".[docs]"
+sphinx-build -b docx docs docs/_build/docx    # Word: docs/_build/docx/SAXS_Analysis_Toolkit.docx
+sphinx-build -b html docs docs/_build/html    # HTML: docs/_build/html/index.html
+```
+
+From the `docs/` directory, `make docx` or `make html` runs the same builders. Build output under `docs/_build/` is gitignored.
+
+**Viewing the HTML:** after `sphinx-build -b html …`, open `docs/_build/html/index.html` in a browser—double-click it in a file manager, or from the repo root run `open docs/_build/html/index.html` (macOS), `xdg-open docs/_build/html/index.html` (many Linux desktops), or `start docs/_build/html/index.html` (Windows Command Prompt).
 
 ## Cite us!
 

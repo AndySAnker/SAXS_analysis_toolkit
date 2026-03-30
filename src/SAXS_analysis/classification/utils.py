@@ -1,3 +1,5 @@
+"""Training data pipelines for form-factor classification (XGBoost)."""
+
 import xgboost as xgb
 from sklearn.preprocessing import LabelEncoder
 from SAXS_analysis.data_processing.utils import load_and_preprocess_data, split_data
@@ -7,7 +9,19 @@ ROOT_DIR = SAXS_analysis.ROOT_DIR
 def process_data_classification(file_name: str, num_data_points: int = int(9e15), 
                               normalize: bool = False, qmin: float = 0.001, 
                               qmax: float = 1.5) -> tuple:
-    """Process data for classification task."""
+    """Build XGBoost ``DMatrix`` objects for train/val/test classification.
+
+    Loads HDF5 via :func:`~SAXS_analysis.data_processing.utils.load_and_preprocess_data`,
+    splits data, label-encodes form factor names, and returns booster-ready matrices.
+
+    Args:
+        file_name: HDF5 path relative to ``ROOT_DIR``.
+        num_data_points, qmin, qmax: Passed through to preprocessing.
+        normalize: Reserved (splitter currently does not scale X for classification).
+
+    Returns:
+        ``(dtrain, dval, dtest, class_names)`` with string class names in label order.
+    """
     # Load and preprocess the data
     X, y = load_and_preprocess_data(ROOT_DIR / file_name, num_data_points, qmin, qmax)
 
@@ -34,10 +48,5 @@ def process_data_classification(file_name: str, num_data_points: int = int(9e15)
     )
 
 def load_classification_model(model_path: str):
-    """Load a pre-trained model.
-    Args:
-        model_path (str): Path to the pre-trained model.
-    Returns:
-        xgb.Booster: The loaded model.
-    """
+    """Load a saved XGBoost booster from disk (path relative to ``ROOT_DIR``)."""
     return xgb.Booster(model_file=ROOT_DIR / model_path)
