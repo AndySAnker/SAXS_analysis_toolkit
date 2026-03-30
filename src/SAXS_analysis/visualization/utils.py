@@ -10,7 +10,6 @@ from pathlib import Path
 import torch
 import pandas as pd
 import os
-import corner
 import joblib
 ROOT_DIR = SAXS_analysis.ROOT_DIR
 
@@ -188,7 +187,11 @@ def save_corner_plot(flat_chain, map_estimate, row_index=None, true_input=None,
         scaler_path: Joblib ``MinMaxScaler`` fitted on parameters.
         save_dir: Output directory.
         parameter_names: Axis labels; defaults to ``Param 0..``.
+
+    Note:
+        Requires the ``corner`` package (``pip install corner``).
     """
+    import corner
 
     os.makedirs(save_dir, exist_ok=True)
     n_dim = flat_chain.shape[1]

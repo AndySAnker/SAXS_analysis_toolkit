@@ -132,10 +132,10 @@ python scripts/fit_sas.py --config configs/analysis/fit_config.yaml
 2) **Experimental data analysis** (preprocess → classify → regress → MCMC parameter inference):
 
 ```bash
-python scripts/experimental_SAS_analysis.py --config configs/analysis/experimental_SAS_analysis.yaml
+python scripts/experimental_SAS_analysis.py -c configs/analysis/experimental_SAS_analysis.yaml
 ```
 
-This pipeline expects the model/scaler paths in `configs/analysis/experimental_SAS_analysis.yaml` to point to existing files (i.e. trained models and saved scalers).
+Use `--plots-only` to run only loading, downsampling, interpolation, and plots (checks data paths without trained models). Full inference requires the model/scaler paths in `configs/analysis/experimental_SAS_analysis.yaml` to point to real files.
 
 ## Documentation (Sphinx)
 

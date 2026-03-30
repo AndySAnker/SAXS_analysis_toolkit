@@ -4,7 +4,7 @@ experiment_name: 'SASDW94_data'   # Descriptive name for the experiment
 
 #  Data loading
 data:
-  data_file: 'data/experimental/SASDW94.dat'  # Path to experimental dataset
+  data_file: 'data/experimental/sasbdb/SASDW94.dat'  # Path to experimental dataset (relative to repo root)
   plot_dir: 'plots'                           # Folder to save plots
 
 # Data preprocessing

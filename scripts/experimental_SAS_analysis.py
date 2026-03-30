@@ -11,7 +11,6 @@ from SAXS_analysis.utils.configs import load_config
 from SAXS_analysis.utils.logging import setup_logging
 from SAXS_analysis.data_processing.utils import load_and_process_SAS_data, adaptive_downsample, interpolate_to_n_points, quotient_transform
 from SAXS_analysis.classification.utils import load_classification_model
-from SAXS_analysis.classification.XGBoost_classification import classify_formfactor
 from SAXS_analysis.forward_ann.forward_ann import ForwardNN
 from SAXS_analysis.inverse_ann.inverse_ann import InverseNN
 from SAXS_analysis.visualization.utils import plot_experimental_data, plot_qt_data, save_corner_plot
@@ -19,8 +18,15 @@ from SAXS_analysis.mcmc.utils import run_mcmc
 ROOT_DIR = Path(SAXS_analysis.ROOT_DIR)
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, required=True)
+    parser = argparse.ArgumentParser(
+        description="Experimental SAS pipeline: preprocess → classify → forward/inverse ANNs → MCMC.",
+    )
+    parser.add_argument('-c', '--config', type=str, required=True, help='YAML config (path relative to repo root)')
+    parser.add_argument(
+        '--plots-only',
+        action='store_true',
+        help='Stop after saving SAXS and quotient-transform plots (no ML or MCMC; no trained models required).',
+    )
     args = parser.parse_args()
 
     # Load configuration
@@ -98,6 +104,10 @@ def main():
     )
 
     logger.info(f"QT Plot saved: {plot_dir}")
+
+    if args.plots_only:
+        logger.info("--plots-only: skipping classification, ANNs, and MCMC.")
+        return
 
     # Use classification model on data
     clf_model_path = ROOT_DIR / config['models']['classification']['model_path']
