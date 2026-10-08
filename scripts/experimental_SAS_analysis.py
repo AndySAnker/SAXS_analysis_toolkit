@@ -14,7 +14,7 @@ from SAXS_analysis.classification.utils import load_classification_model
 from SAXS_analysis.classification.XGBoost_classification import classify_formfactor
 from SAXS_analysis.forward_ann.forward_ann import ForwardNN
 from SAXS_analysis.inverse_ann.inverse_ann import InverseNN
-from SAXS_analysis.visualization.utils import plot_experimental_data, plot_qt_data, save_corner_plot
+from SAXS_analysis.visualization.utils import plot_experimental_data, plot_qt_data, save_corner_plot, save_trace_plot
 from SAXS_analysis.mcmc.utils import run_mcmc
 ROOT_DIR = Path(SAXS_analysis.ROOT_DIR)
 
@@ -153,20 +153,17 @@ def main():
     burn_in = config['mcmc']['burn_in']
     niter = config['mcmc']['niter']
 
-    p0 = [np.random.rand(num_params) for _ in range(nwalkers)]
+    p0 = priors_scaled + 0.01 * np.random.randn(nwalkers, num_params)
 
     # MCMC sampling
     start_time = time.time()
-    chain, log_probs, map_estimate = run_mcmc(
-        p0, nwalkers, niter, qt_padded, qt_std_padded, 0, s_ml_model, priors_scaled, burn_in
-    )
+    chain, flat_chain, log_probs, map_estimate = run_mcmc(p0, nwalkers, niter, qt_padded, qt_std_padded, 0, s_ml_model, priors_scaled, burn_in)
 
-    theta_max_scaled = chain[np.argmax(log_probs.flatten())]
-    MAP_unscaled = inverse_scaler.inverse_transform(theta_max_scaled.reshape(1, -1)).flatten()
+    # Unscale MAP estimate
+    MAP_unscaled = inverse_scaler.inverse_transform(map_estimate.reshape(1, -1)).flatten()
     logger.info(f"MAP estimate: {MAP_unscaled}")
 
     # Save corner plot
-    flat_chain = chain.reshape(-1, chain.shape[-1])
     save_corner_plot(
         flat_chain=flat_chain,
         map_estimate=map_estimate,
@@ -174,11 +171,58 @@ def main():
         true_input=None,
         scaler_path=inverse_scaler_path,
         save_dir=plot_dir,
-        parameter_names=parameter_names
-    )
+        parameter_names=parameter_names)
+
+    # Unscale chain
+    inverse_scaler = joblib.load(inverse_scaler_path)
+
+    chain_shape = chain.shape
+    chain_unscaled = inverse_scaler.inverse_transform(chain.reshape(-1, chain.shape[-1])).reshape(chain_shape)
+
+    # Save trace plot
+    save_trace_plot(
+        chain=chain_unscaled,
+        parameter_names=parameter_names,
+        save_path=plot_dir/f"{data_stem}_trace.png",
+        data_stem=data_name.stem)
 
     logger.info(f"Inference completed in {time.time() - start_time:.2f} seconds")
 
+    # Save sampled parameter combinations and corresponding log-probabilities
+    samples_file = plot_dir / f"{data_stem}_MCMC_samples.txt"
+
+    # Flatten chain: (niter, nwalkers, nparams) -> (niter*nwalkers, nparams)
+    flat_chain_all = chain.reshape(-1, num_params)
+
+    # Flatten log probabilities
+    flat_log_probs = np.asarray(log_probs).reshape(-1)
+
+    # Make sure the number of samples matches
+    if len(flat_chain_all) != len(flat_log_probs):
+        raise ValueError(
+            f"Number of parameter samples ({len(flat_chain_all)}) "
+            f"does not match number of log probabilities ({len(flat_log_probs)})."
+        )
+
+    # Unscale parameter values back to their physical units
+    flat_chain_unscaled = inverse_scaler.inverse_transform(flat_chain_all)
+
+    # Write to TXT file
+    with open(samples_file, "w") as f:
+        # Header
+        f.write("Sample")
+        for name in parameter_names:
+            f.write(f"\t{name}")
+        f.write("\tLog_probability\n")
+
+        # Data
+        for i, (params, log_prob) in enumerate(zip(flat_chain_unscaled, flat_log_probs)):
+            f.write(f"{i}")
+            for value in params:
+                f.write(f"\t{value:.8f}")
+            f.write(f"\t{log_prob:.8f}\n")
+
+    logger.info(f"MCMC samples and likelihoods saved to: {samples_file}")
+
 if __name__ == "__main__":
     main()
-

@@ -22,21 +22,33 @@ def lnprob(theta, y, y_std, model, priors):
 
 def run_mcmc(p0, nwalkers, niter, y, y_std, row_index, s_ml_model, priors_for_inverse_ann, burn_in):
     ndim = len(p0[0])
+
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(y, y_std, s_ml_model, priors_for_inverse_ann))
 
-    print(f"[Main] Running burn-in...")
+    print(f"Running burn-in...")
     p0, _, _ = sampler.run_mcmc(p0, burn_in, progress=True)
     sampler.reset()
 
-    print(f"[Main] Running production for...")
+    print(f"Running production for...")
     sampler.run_mcmc(p0, niter, progress=True)
 
+    acceptance_fraction = np.mean(sampler.acceptance_fraction)
+    print(f"Acceptance Fraction: {acceptance_fraction}")
+
+    tau = sampler.get_autocorr_time()
+    print(f"Integrated autocorrelation time: {tau}")
+
+    # Unflattened chain for trace plots
+    chain = sampler.get_chain()
+
+    # Flattened chain for posterior analysis / corner plot
     flat_chain = sampler.get_chain(flat=True)
     flat_log_prob = sampler.get_log_prob(flat=True)
 
+    # MAP estimate from flattened chain
     max_idx = np.argmax(flat_log_prob)
     map_estimate = flat_chain[max_idx]
 
-    print(f"[Main] MCMC complete for row {row_index}")
+    print(f"MCMC complete for row {row_index}")
 
-    return flat_chain, flat_log_prob, map_estimate
+    return chain, flat_chain, flat_log_prob, map_estimate

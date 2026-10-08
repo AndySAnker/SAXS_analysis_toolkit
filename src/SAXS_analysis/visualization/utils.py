@@ -208,7 +208,7 @@ def save_corner_plot(flat_chain, map_estimate, row_index=None, true_input=None,
     fig_path = os.path.join(save_dir, filename)
     fig.savefig(fig_path, dpi=300)
     plt.close(fig)
-    print(f"[Plot] Corner plot saved to {fig_path}")
+    print(f"Corner plot saved to {fig_path}")
 
 def plot_experimental_data(q_raw, Iq_raw, std_raw,
                            q_interp, Iq_interp, std_interp,
@@ -247,3 +247,22 @@ def plot_qt_data(q_mid_padded, qt_padded, qt_std_padded, save_path, data_stem):
     plt.grid(True, which='both', ls='--', lw=0.5)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
+
+def save_trace_plot(chain, parameter_names, save_path, data_stem):
+    """
+    Plot and save trace plots for MCMC walkers
+    """
+    ndim = chain.shape[2]
+    fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
+
+    for i in range(ndim):
+        axes[i].plot(chain[:, :, i], alpha=0.3)
+        axes[i].set_ylabel(parameter_names[i])
+
+    axes[-1].set_xlabel("Step")
+    fig.suptitle(f"MCMC Trace Plot ({data_stem})")
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print(f"Trace plot saved to {save_path}")
